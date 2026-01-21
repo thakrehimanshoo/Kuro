@@ -59,7 +59,7 @@ export default function StatsPage() {
 
     let streak = 0;
     const today = getTodayDate();
-    let checkDate = new Date(today);
+    const checkDate = new Date(today);
 
     for (let i = 0; i < uniqueDates.length; i++) {
       const dateStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${String(checkDate.getDate()).padStart(2, '0')}`;

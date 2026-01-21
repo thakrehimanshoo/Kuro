@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { AuthProvider } from "@/contexts/auth-context";
 
 export const metadata: Metadata = {
   title: "Kuro",
@@ -36,7 +37,9 @@ export default function RootLayout({
         <meta name="format-detection" content="telephone=no" />
       </head>
       <body className="antialiased">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
