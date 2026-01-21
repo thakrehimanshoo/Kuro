@@ -19,16 +19,21 @@ interface TimerState {
   autoStartBreaks: boolean;
   autoStartPomodoros: boolean;
 
+  // Task linking
+  activeTaskId: number | null;
+
   // Actions
   start: () => void;
   pause: () => void;
   reset: () => void;
   tick: () => void;
   skipToNext: () => void;
+  abandon: () => void;
   completeSession: () => void;
   setDurations: (work: number, shortBreak: number, longBreak: number) => void;
   setAutoStart: (breaks: boolean, pomodoros: boolean) => void;
   resetCycle: () => void;
+  setActiveTask: (taskId: number | null) => void;
 }
 
 export const useTimerStore = create<TimerState>((set, get) => ({
@@ -44,6 +49,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
   totalSessionsToday: 0,
   autoStartBreaks: false,
   autoStartPomodoros: false,
+  activeTaskId: null,
 
   start: () => set({ status: 'running' }),
 
@@ -77,6 +83,22 @@ export const useTimerStore = create<TimerState>((set, get) => ({
     get().completeSession();
   },
 
+  abandon: () => {
+    // Reset current session without completing it
+    const { type, workDuration, shortBreakDuration, longBreakDuration } = get();
+    const duration =
+      type === 'work' ? workDuration :
+      type === 'short-break' ? shortBreakDuration :
+      longBreakDuration;
+
+    set({
+      status: 'idle',
+      timeLeft: duration * 60,
+      totalTime: duration * 60,
+      activeTaskId: null, // Clear active task when abandoning
+    });
+  },
+
   completeSession: () => {
     const {
       type,
@@ -88,6 +110,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       longBreakDuration,
       autoStartBreaks,
       autoStartPomodoros,
+      activeTaskId,
     } = get();
 
     let newType: TimerType;
@@ -95,11 +118,13 @@ export const useTimerStore = create<TimerState>((set, get) => ({
     let newCompletedPomodoros = completedPomodoros;
     let newTotalSessions = totalSessionsToday;
     let shouldAutoStart = false;
+    let clearTask = false;
 
     if (type === 'work') {
       // Completed a work session
       newCompletedPomodoros = completedPomodoros + 1;
       newTotalSessions = totalSessionsToday + 1;
+      clearTask = true; // Clear task after completing work session
 
       if (currentPomodoro >= 4) {
         // After 4th pomodoro, take long break
@@ -136,6 +161,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       currentPomodoro: newPomodoro,
       completedPomodoros: newCompletedPomodoros,
       totalSessionsToday: newTotalSessions,
+      activeTaskId: clearTask ? null : activeTaskId,
     });
 
     // Play completion sound
@@ -183,6 +209,11 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       completedPomodoros: 0,
       timeLeft: workDuration * 60,
       totalTime: workDuration * 60,
+      activeTaskId: null,
     });
+  },
+
+  setActiveTask: (taskId: number | null) => {
+    set({ activeTaskId: taskId });
   },
 }));

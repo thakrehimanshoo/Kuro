@@ -1,9 +1,12 @@
 import Dexie, { type EntityTable } from 'dexie';
 
+export type TaskPriority = 'low' | 'medium' | 'high';
+
 export interface Task {
   id?: number;
   title: string;
   completed: boolean;
+  priority: TaskPriority;
   createdAt: number;
   completedAt?: number;
 }
@@ -14,6 +17,8 @@ export interface PomodoroSession {
   duration: number;
   completedAt: number;
   date: string; // YYYY-MM-DD format for grouping
+  taskId?: number; // Link to task
+  abandoned: boolean; // Track if session was abandoned
 }
 
 export interface Settings {
@@ -31,8 +36,8 @@ const db = new Dexie('KuroDB') as Dexie & {
 };
 
 db.version(1).stores({
-  tasks: '++id, completed, createdAt',
-  sessions: '++id, date, completedAt, type',
+  tasks: '++id, completed, createdAt, priority',
+  sessions: '++id, date, completedAt, type, taskId, abandoned',
   settings: '++id',
 });
 
