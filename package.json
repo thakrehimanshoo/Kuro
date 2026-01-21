@@ -15,7 +15,9 @@
     "zustand": "^5.0.2",
     "dexie": "^4.0.10",
     "dexie-react-hooks": "^1.1.7",
-    "@next/third-parties": "^15.1.4"
+    "@next/third-parties": "^15.1.4",
+    "@supabase/supabase-js": "^2.39.3",
+    "@supabase/ssr": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^22",

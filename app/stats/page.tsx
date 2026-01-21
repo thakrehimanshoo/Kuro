@@ -17,23 +17,34 @@ export default function StatsPage() {
 
   const weekDates = getWeekDates();
   const weekData = weekDates.map((date) => {
-    const sessions = allSessions?.filter(
+    const completedSessions = allSessions?.filter(
       (s) => s.date === date && s.type === 'work' && !s.abandoned
+    ) || [];
+    const abandonedSessions = allSessions?.filter(
+      (s) => s.date === date && s.type === 'work' && s.abandoned
     ) || [];
     return {
       date,
-      count: sessions.length,
-      duration: sessions.reduce((sum, s) => sum + s.duration, 0),
+      completed: completedSessions.length,
+      abandoned: abandonedSessions.length,
+      duration: completedSessions.reduce((sum, s) => sum + s.duration, 0),
     };
   });
 
-  const todayPomodoros = todaySessions?.filter((s) => s.type === 'work' && !s.abandoned).length || 0;
+  // Today's metrics
+  const todayCompleted = todaySessions?.filter((s) => s.type === 'work' && !s.abandoned).length || 0;
+  const todayAbandoned = todaySessions?.filter((s) => s.type === 'work' && s.abandoned).length || 0;
   const todayFocusTime = Math.round(
     (todaySessions?.filter((s) => s.type === 'work' && !s.abandoned)
       .reduce((sum, s) => sum + s.duration, 0) || 0)
   );
 
-  const totalPomodoros = allSessions?.filter((s) => s.type === 'work' && !s.abandoned).length || 0;
+  // All-time metrics
+  const totalCompleted = allSessions?.filter((s) => s.type === 'work' && !s.abandoned).length || 0;
+  const totalAbandoned = allSessions?.filter((s) => s.type === 'work' && s.abandoned).length || 0;
+  const totalAttempted = totalCompleted + totalAbandoned;
+  const completionRate = totalAttempted > 0 ? Math.round((totalCompleted / totalAttempted) * 100) : 0;
+
   const totalFocusTime = Math.round(
     (allSessions?.filter((s) => s.type === 'work' && !s.abandoned)
       .reduce((sum, s) => sum + s.duration, 0) || 0)
@@ -69,9 +80,9 @@ export default function StatsPage() {
 
   const streak = calculateStreak();
 
-  const maxCount = Math.max(...weekData.map((d) => d.count), 1);
+  const maxCount = Math.max(...weekData.map((d) => d.completed + d.abandoned), 1);
 
-  const hasData = totalPomodoros > 0;
+  const hasData = totalAttempted > 0;
 
   return (
     <div className="flex flex-col h-screen bg-black text-white">
@@ -102,15 +113,45 @@ export default function StatsPage() {
               <h2 className="text-xs opacity-40 uppercase tracking-wider mb-6">Today</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
-                  <div className="text-5xl font-extralight mb-3">{todayPomodoros}</div>
-                  <div className="text-sm opacity-40">Sessions</div>
+                  <div className="text-5xl font-extralight mb-3">{todayCompleted}</div>
+                  <div className="text-sm opacity-40">Completed</div>
                 </div>
                 <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
                   <div className="text-5xl font-extralight mb-3">{todayFocusTime}</div>
                   <div className="text-sm opacity-40">Minutes</div>
                 </div>
               </div>
+              {todayAbandoned > 0 && (
+                <div className="mt-4 bg-white/[0.02] border border-white/10 rounded-2xl p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm opacity-40">Abandoned Today</span>
+                    <span className="text-2xl font-extralight opacity-60">{todayAbandoned}</span>
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* Completion Rate */}
+            {totalAttempted > 5 && (
+              <div className="mb-12">
+                <h2 className="text-xs opacity-40 uppercase tracking-wider mb-6">Completion Rate</h2>
+                <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
+                  <div className="flex items-end gap-4 mb-4">
+                    <div className="text-6xl font-extralight">{completionRate}%</div>
+                    <div className="pb-2 opacity-40 text-sm">
+                      {totalCompleted} of {totalAttempted}
+                    </div>
+                  </div>
+                  {/* Progress bar */}
+                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-white transition-all duration-500"
+                      style={{ width: `${completionRate}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Streak */}
             {streak > 0 && (
@@ -130,9 +171,11 @@ export default function StatsPage() {
             <div className="mb-12">
               <h2 className="text-xs opacity-40 uppercase tracking-wider mb-6">Last 7 Days</h2>
               <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
-                <div className="flex items-end justify-between h-48 gap-3">
-                  {weekData.map((day, index) => {
-                    const heightPercent = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
+                <div className="flex items-end justify-between h-48 gap-2">
+                  {weekData.map((day) => {
+                    const total = day.completed + day.abandoned;
+                    const completedHeight = maxCount > 0 ? (day.completed / maxCount) * 100 : 0;
+                    const abandonedHeight = maxCount > 0 ? (day.abandoned / maxCount) * 100 : 0;
                     const date = new Date(day.date);
                     const dayLabel = date.toLocaleDateString('en-US', { weekday: 'short' }).substring(0, 1);
                     const isToday = day.date === todayDate;
@@ -140,20 +183,35 @@ export default function StatsPage() {
                     return (
                       <div key={day.date} className="flex-1 flex flex-col items-center justify-end h-full group">
                         <div className="w-full flex flex-col items-center justify-end flex-1 mb-3 relative">
-                          {day.count > 0 && (
+                          {total > 0 && (
                             <div className="text-xs opacity-0 group-hover:opacity-60 transition-opacity duration-200 mb-2 absolute -top-6">
-                              {day.count}
+                              {day.completed}{day.abandoned > 0 && ` +${day.abandoned}`}
                             </div>
                           )}
-                          <div
-                            className={`w-full rounded-t-lg transition-all duration-300 ${
-                              isToday ? 'bg-white' : 'bg-white/60'
-                            } hover:bg-white`}
-                            style={{
-                              height: `${heightPercent}%`,
-                              minHeight: day.count > 0 ? '8px' : '0',
-                            }}
-                          />
+                          <div className="w-full flex flex-col-reverse gap-[2px]">
+                            {/* Completed sessions */}
+                            {day.completed > 0 && (
+                              <div
+                                className={`w-full rounded-t-md transition-all duration-300 ${
+                                  isToday ? 'bg-white' : 'bg-white/70'
+                                } hover:bg-white`}
+                                style={{
+                                  height: `${completedHeight}%`,
+                                  minHeight: '8px',
+                                }}
+                              />
+                            )}
+                            {/* Abandoned sessions */}
+                            {day.abandoned > 0 && (
+                              <div
+                                className="w-full bg-white/20 rounded-t-md transition-all duration-300 hover:bg-white/30"
+                                style={{
+                                  height: `${abandonedHeight}%`,
+                                  minHeight: '4px',
+                                }}
+                              />
+                            )}
+                          </div>
                         </div>
                         <div
                           className={`text-xs ${
@@ -166,6 +224,16 @@ export default function StatsPage() {
                     );
                   })}
                 </div>
+                <div className="flex items-center justify-center gap-6 mt-6 text-xs opacity-40">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-white rounded-sm" />
+                    <span>Completed</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-white/20 rounded-sm" />
+                    <span>Abandoned</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -175,11 +243,20 @@ export default function StatsPage() {
               <div className="space-y-4">
                 <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 flex items-center justify-between">
                   <div>
-                    <div className="text-sm opacity-40 mb-2">Total Sessions</div>
-                    <div className="text-3xl font-extralight">{totalPomodoros}</div>
+                    <div className="text-sm opacity-40 mb-2">Total Completed</div>
+                    <div className="text-3xl font-extralight">{totalCompleted}</div>
                   </div>
-                  <div className="text-4xl opacity-10">📊</div>
+                  <div className="text-4xl opacity-10">✓</div>
                 </div>
+                {totalAbandoned > 0 && (
+                  <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 flex items-center justify-between">
+                    <div>
+                      <div className="text-sm opacity-40 mb-2">Total Abandoned</div>
+                      <div className="text-3xl font-extralight opacity-60">{totalAbandoned}</div>
+                    </div>
+                    <div className="text-4xl opacity-10">⊗</div>
+                  </div>
+                )}
                 <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 flex items-center justify-between">
                   <div>
                     <div className="text-sm opacity-40 mb-2">Total Focus Time</div>
