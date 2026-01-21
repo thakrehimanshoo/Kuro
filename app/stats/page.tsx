@@ -18,7 +18,7 @@ export default function StatsPage() {
   const weekDates = getWeekDates();
   const weekData = weekDates.map((date) => {
     const sessions = allSessions?.filter(
-      (s) => s.date === date && s.type === 'work'
+      (s) => s.date === date && s.type === 'work' && !s.abandoned
     ) || [];
     return {
       date,
@@ -27,15 +27,15 @@ export default function StatsPage() {
     };
   });
 
-  const todayPomodoros = todaySessions?.filter((s) => s.type === 'work').length || 0;
+  const todayPomodoros = todaySessions?.filter((s) => s.type === 'work' && !s.abandoned).length || 0;
   const todayFocusTime = Math.round(
-    (todaySessions?.filter((s) => s.type === 'work')
+    (todaySessions?.filter((s) => s.type === 'work' && !s.abandoned)
       .reduce((sum, s) => sum + s.duration, 0) || 0)
   );
 
-  const totalPomodoros = allSessions?.filter((s) => s.type === 'work').length || 0;
+  const totalPomodoros = allSessions?.filter((s) => s.type === 'work' && !s.abandoned).length || 0;
   const totalFocusTime = Math.round(
-    (allSessions?.filter((s) => s.type === 'work')
+    (allSessions?.filter((s) => s.type === 'work' && !s.abandoned)
       .reduce((sum, s) => sum + s.duration, 0) || 0)
   );
 
@@ -43,7 +43,7 @@ export default function StatsPage() {
   const calculateStreak = () => {
     if (!allSessions || allSessions.length === 0) return 0;
 
-    const workSessions = allSessions.filter(s => s.type === 'work');
+    const workSessions = allSessions.filter(s => s.type === 'work' && !s.abandoned);
     const uniqueDates = [...new Set(workSessions.map(s => s.date))].sort().reverse();
 
     let streak = 0;

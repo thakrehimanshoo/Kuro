@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { useTimerStore } from '@/lib/store';
 import { formatTime, getTodayDate } from '@/lib/utils';
 import { db } from '@/lib/db';
@@ -14,12 +15,19 @@ export default function TimerPage() {
     timeLeft,
     totalTime,
     currentPomodoro,
+    activeTaskId,
     start,
     pause,
     reset,
     tick,
     skipToNext,
+    abandon,
   } = useTimerStore();
+
+  const activeTask = useLiveQuery(
+    () => activeTaskId ? db.tasks.get(activeTaskId) : undefined,
+    [activeTaskId]
+  );
 
   useEffect(() => {
     if (status === 'running') {
@@ -32,18 +40,22 @@ export default function TimerPage() {
   }, [status, tick]);
 
   useEffect(() => {
-    // Save completed session to database when auto-progressing
-    if (status === 'idle' && timeLeft !== totalTime) {
-      const session = {
-        type,
-        duration: totalTime / 60,
-        completedAt: Date.now(),
-        date: getTodayDate(),
-      };
+    // Save completed session to database
+    const saveSession = async () => {
+      if (timeLeft === 0 && status === 'idle') {
+        await db.sessions.add({
+          type,
+          duration: totalTime / 60,
+          completedAt: Date.now(),
+          date: getTodayDate(),
+          taskId: activeTaskId || undefined,
+          abandoned: false,
+        });
+      }
+    };
 
-      db.sessions.add(session);
-    }
-  }, [status, type, timeLeft, totalTime]);
+    saveSession();
+  }, [timeLeft, status, type, totalTime, activeTaskId]);
 
   const progress = totalTime > 0 ? (totalTime - timeLeft) / totalTime : 0;
 
@@ -53,6 +65,21 @@ export default function TimerPage() {
     } else {
       start();
     }
+  };
+
+  const handleAbandon = async () => {
+    if (status !== 'idle' && timeLeft < totalTime) {
+      // Save abandoned session
+      await db.sessions.add({
+        type,
+        duration: (totalTime - timeLeft) / 60,
+        completedAt: Date.now(),
+        date: getTodayDate(),
+        taskId: activeTaskId || undefined,
+        abandoned: true,
+      });
+    }
+    abandon();
   };
 
   const getNextPhaseText = () => {
@@ -78,13 +105,13 @@ export default function TimerPage() {
   const getMessage = () => {
     if (status === 'running') {
       if (type === 'work') {
-        return 'Stay focused';
+        return activeTask ? `Working on: ${activeTask.title}` : 'Stay focused';
       } else {
         return 'Take a break';
       }
     } else {
       if (type === 'work') {
-        return 'Ready to focus?';
+        return activeTask ? activeTask.title : 'Ready to focus?';
       } else {
         return 'Time to rest';
       }
@@ -128,11 +155,11 @@ export default function TimerPage() {
             <ProgressRing progress={progress} size={320} strokeWidth={3} />
           </div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
+            <div className="text-center px-6">
               <div className="text-7xl font-extralight tracking-tighter mb-3">
                 {formatTime(timeLeft)}
               </div>
-              <div className="text-sm opacity-30 tracking-wide">
+              <div className="text-sm opacity-30 tracking-wide max-w-xs truncate">
                 {getMessage()}
               </div>
             </div>
@@ -143,7 +170,8 @@ export default function TimerPage() {
         <div className="flex items-center gap-4 mb-6">
           <button
             onClick={reset}
-            className="w-14 h-14 rounded-full border border-white/10 flex items-center justify-center transition-all duration-200 active:scale-95 hover:border-white/30"
+            disabled={status === 'idle' && timeLeft === totalTime}
+            className="w-14 h-14 rounded-full border border-white/10 flex items-center justify-center transition-all duration-200 active:scale-95 hover:border-white/30 disabled:opacity-20 disabled:hover:border-white/10"
           >
             <ResetIcon className="w-6 h-6" />
           </button>
@@ -161,10 +189,23 @@ export default function TimerPage() {
 
           <button
             onClick={skipToNext}
-            className="w-14 h-14 rounded-full border border-white/10 flex items-center justify-center transition-all duration-200 active:scale-95 hover:border-white/30"
+            disabled={status === 'idle' && timeLeft === totalTime}
+            className="w-14 h-14 rounded-full border border-white/10 flex items-center justify-center transition-all duration-200 active:scale-95 hover:border-white/30 disabled:opacity-20 disabled:hover:border-white/10"
           >
             <SkipIcon className="w-6 h-6" />
           </button>
+        </div>
+
+        {/* Secondary controls */}
+        <div className="flex items-center gap-4 mb-4">
+          {(status !== 'idle' || timeLeft !== totalTime) && (
+            <button
+              onClick={handleAbandon}
+              className="px-4 py-2 text-xs opacity-40 hover:opacity-100 transition-opacity duration-200 border border-white/10 rounded-lg"
+            >
+              Abandon Session
+            </button>
+          )}
         </div>
 
         {/* Next phase indicator */}
