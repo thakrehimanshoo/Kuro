@@ -2,15 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/lib/db';
+import { db, Settings } from '@/lib/db';
 import { useTimerStore } from '@/lib/store';
 import BottomNav from '@/components/BottomNav';
+import { useAuth } from '@/contexts/auth-context';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function SettingsPage() {
   const settings = useLiveQuery(() => db.settings.toArray());
   const currentSettings = settings?.[0];
 
   const { setDurations, setAutoStart, autoStartBreaks, autoStartPomodoros } = useTimerStore();
+  const { user, signOut } = useAuth();
+  const router = useRouter();
 
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [workDuration, setWorkDuration] = useState(25);
@@ -47,7 +52,7 @@ export default function SettingsPage() {
     setAutoPomodoros(autoStartPomodoros);
   }, [autoStartBreaks, autoStartPomodoros]);
 
-  const updateSettings = async (updates: Partial<typeof currentSettings>) => {
+  const updateSettings = async (updates: Partial<Settings>) => {
     if (currentSettings?.id) {
       await db.settings.update(currentSettings.id, updates);
 
@@ -95,6 +100,11 @@ export default function SettingsPage() {
       setLongBreakDuration(value);
       await updateSettings({ longBreakDuration: value });
     }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.refresh();
   };
 
   return (
@@ -236,6 +246,43 @@ export default function SettingsPage() {
               </div>
               <Toggle enabled={soundEnabled} />
             </button>
+          </div>
+        </div>
+
+        {/* Account */}
+        <div className="mb-8 border-t border-white/10">
+          <div className="px-6 py-4 mt-6">
+            <h2 className="text-xs opacity-40 uppercase tracking-wider">Account</h2>
+          </div>
+
+          <div className="px-6 space-y-4">
+            {user ? (
+              <>
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                  <div className="text-xs opacity-40 mb-2">Signed in as</div>
+                  <div className="text-base">{user.email}</div>
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  className="w-full bg-white/5 border border-white/10 py-3 px-6 rounded-2xl hover:bg-white/10 transition-colors"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                  <div className="text-sm mb-2">Not signed in</div>
+                  <div className="text-xs opacity-40">Sign in to sync your progress across devices</div>
+                </div>
+                <Link
+                  href="/auth/login"
+                  className="block w-full bg-white text-black text-center font-medium py-3 px-6 rounded-2xl"
+                >
+                  Sign In
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
