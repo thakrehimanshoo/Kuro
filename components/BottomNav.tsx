@@ -14,28 +14,68 @@ export default function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-white/10 safe-bottom z-50">
-      <div className="flex justify-around items-center h-16 max-w-2xl mx-auto">
-        {tabs.map((tab) => {
-          const isActive = pathname === tab.path;
-          const Icon = tab.icon;
+    <>
+      {/* Mobile Bottom Navigation */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-black border-t border-white/10 safe-bottom z-50">
+        <div className="flex justify-around items-center h-16">
+          {tabs.map((tab) => {
+            const isActive = pathname === tab.path;
+            const Icon = tab.icon;
 
-          return (
-            <Link
-              key={tab.path}
-              href={tab.path}
-              prefetch={true}
-              className={`flex flex-col items-center justify-center flex-1 h-full transition-opacity duration-150 ${
-                isActive ? 'opacity-100' : 'opacity-40'
-              }`}
-            >
-              <Icon className="w-6 h-6 mb-1" />
-              <span className="text-xs">{tab.name}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+            return (
+              <Link
+                key={tab.path}
+                href={tab.path}
+                prefetch={true}
+                className={`flex flex-col items-center justify-center flex-1 h-full transition-opacity duration-150 ${
+                  isActive ? 'opacity-100' : 'opacity-40'
+                }`}
+              >
+                <Icon className="w-6 h-6 mb-1" />
+                <span className="text-xs">{tab.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Desktop Sidebar Navigation */}
+      <nav className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 bg-black border-r border-white/10 flex-col z-50">
+        <div className="p-8">
+          <h1 className="text-2xl font-extralight tracking-tight">Kuro</h1>
+          <p className="text-xs opacity-30 mt-1">Focus Timer</p>
+        </div>
+
+        <div className="flex-1 px-4 space-y-2">
+          {tabs.map((tab) => {
+            const isActive = pathname === tab.path;
+            const Icon = tab.icon;
+
+            return (
+              <Link
+                key={tab.path}
+                href={tab.path}
+                prefetch={true}
+                className={`flex items-center gap-4 px-6 py-4 rounded-xl transition-all duration-150 ${
+                  isActive
+                    ? 'bg-white/10 opacity-100'
+                    : 'opacity-40 hover:opacity-70 hover:bg-white/5'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-sm font-medium">{tab.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className="p-6 border-t border-white/10">
+          <div className="text-xs opacity-30">
+            Press ⌘K for shortcuts
+          </div>
+        </div>
+      </nav>
+    </>
   );
 }
 

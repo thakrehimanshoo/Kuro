@@ -108,22 +108,22 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white">
+    <div className="flex flex-col h-screen bg-black text-white lg:ml-64">
       {/* Header */}
-      <div className="safe-top px-6 pt-8 pb-6">
-        <h1 className="text-4xl font-extralight mb-3">Settings</h1>
-        <p className="text-sm opacity-40">Customize your experience</p>
+      <div className="safe-top px-6 lg:px-12 pt-8 lg:pt-12 pb-6">
+        <h1 className="text-4xl lg:text-5xl font-extralight mb-3">Settings</h1>
+        <p className="text-sm lg:text-base opacity-40">Customize your experience</p>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto pb-20">
+      <div className="flex-1 overflow-y-auto pb-20 lg:pb-8 max-w-4xl">
         {/* Timer durations */}
         <div className="mb-8">
-          <div className="px-6 py-4">
-            <h2 className="text-xs opacity-40 uppercase tracking-wider">Timer Durations</h2>
+          <div className="px-6 lg:px-12 py-4">
+            <h2 className="text-xs lg:text-sm opacity-40 uppercase tracking-wider">Timer Durations</h2>
           </div>
 
-          <div className="px-6 space-y-6">
+          <div className="px-6 lg:px-12 space-y-6">
             <div className="flex items-center justify-between py-2">
               <span className="text-base">Focus Session</span>
               <div className="flex items-center gap-4">
@@ -200,11 +200,11 @@ export default function SettingsPage() {
 
         {/* Auto-start */}
         <div className="mb-8 border-t border-white/10">
-          <div className="px-6 py-4 mt-6">
+          <div className="px-6 lg:px-12 py-4 mt-6">
             <h2 className="text-xs opacity-40 uppercase tracking-wider">Auto-start</h2>
           </div>
 
-          <div className="px-6 space-y-4">
+          <div className="px-6 lg:px-12 space-y-4">
             <button
               onClick={handleAutoBreaksToggle}
               className="w-full flex items-center justify-between py-3 active:opacity-60 transition-opacity duration-200"
@@ -231,7 +231,7 @@ export default function SettingsPage() {
 
         {/* Sound */}
         <div className="mb-8 border-t border-white/10">
-          <div className="px-6 py-4 mt-6">
+          <div className="px-6 lg:px-12 py-4 mt-6">
             <h2 className="text-xs opacity-40 uppercase tracking-wider">Audio</h2>
           </div>
 
@@ -251,11 +251,11 @@ export default function SettingsPage() {
 
         {/* Account */}
         <div className="mb-8 border-t border-white/10">
-          <div className="px-6 py-4 mt-6">
+          <div className="px-6 lg:px-12 py-4 mt-6">
             <h2 className="text-xs opacity-40 uppercase tracking-wider">Account</h2>
           </div>
 
-          <div className="px-6 space-y-4">
+          <div className="px-6 lg:px-12 space-y-4">
             {user ? (
               <>
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
@@ -287,7 +287,7 @@ export default function SettingsPage() {
         </div>
 
         {/* About */}
-        <div className="px-6 py-12 border-t border-white/10 mt-8">
+        <div className="px-6 lg:px-12 py-12 border-t border-white/10 mt-8">
           <div className="text-center">
             <div className="text-5xl font-extralight mb-3">Kuro</div>
             <div className="text-sm opacity-40 mb-1">Version 1.0.0</div>

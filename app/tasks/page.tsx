@@ -87,11 +87,11 @@ export default function TasksPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white">
+    <div className="flex flex-col h-screen bg-black text-white lg:ml-64">
       {/* Header */}
-      <div className="safe-top px-6 pt-8 pb-6">
-        <h1 className="text-4xl font-extralight mb-3">Tasks</h1>
-        <div className="flex items-center gap-4 text-sm">
+      <div className="safe-top px-6 lg:px-12 pt-8 lg:pt-12 pb-6">
+        <h1 className="text-4xl lg:text-5xl font-extralight mb-3">Tasks</h1>
+        <div className="flex items-center gap-4 text-sm lg:text-base">
           <span className="opacity-60">
             {activeTasks} active
           </span>
@@ -103,10 +103,10 @@ export default function TasksPage() {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex border-b border-white/10 px-6">
+      <div className="flex border-b border-white/10 px-6 lg:px-12">
         <button
           onClick={() => setFilter('all')}
-          className={`flex-1 py-4 text-sm transition-all duration-200 relative ${
+          className={`flex-1 lg:flex-none lg:px-8 py-4 text-sm lg:text-base transition-all duration-150 relative ${
             filter === 'all' ? 'opacity-100' : 'opacity-40'
           }`}
         >
@@ -117,7 +117,7 @@ export default function TasksPage() {
         </button>
         <button
           onClick={() => setFilter('active')}
-          className={`flex-1 py-4 text-sm transition-all duration-200 relative ${
+          className={`flex-1 lg:flex-none lg:px-8 py-4 text-sm lg:text-base transition-all duration-150 relative ${
             filter === 'active' ? 'opacity-100' : 'opacity-40'
           }`}
         >
@@ -128,7 +128,7 @@ export default function TasksPage() {
         </button>
         <button
           onClick={() => setFilter('completed')}
-          className={`flex-1 py-4 text-sm transition-all duration-200 relative ${
+          className={`flex-1 lg:flex-none lg:px-8 py-4 text-sm lg:text-base transition-all duration-150 relative ${
             filter === 'completed' ? 'opacity-100' : 'opacity-40'
           }`}
         >
@@ -140,9 +140,9 @@ export default function TasksPage() {
       </div>
 
       {/* Task list */}
-      <div className="flex-1 overflow-y-auto pb-40">
+      <div className="flex-1 overflow-y-auto pb-40 lg:pb-8">
         {tasks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full px-6">
+          <div className="flex flex-col items-center justify-center h-full px-6 lg:px-12">
             <div className="w-16 h-16 rounded-full border-2 border-white/10 flex items-center justify-center mb-4">
               {filter === 'all' && <CheckIcon className="w-8 h-8 opacity-20" />}
               {filter === 'active' && <PlusIcon className="w-8 h-8 opacity-20" />}
@@ -155,11 +155,11 @@ export default function TasksPage() {
             </p>
           </div>
         ) : (
-          <div className="px-6 py-2">
+          <div className="px-6 lg:px-12 py-2 max-w-6xl">
             {tasks.map((task, index) => (
               <div
                 key={task.id}
-                className="flex items-center gap-3 py-5 border-b border-white/5 group"
+                className="flex items-center gap-3 lg:gap-4 py-5 lg:py-6 border-b border-white/5 group"
                 style={{
                   animation: `slideIn 0.3s ease-out ${index * 0.05}s both`
                 }}
@@ -222,10 +222,10 @@ export default function TasksPage() {
       </div>
 
       {/* Add task form */}
-      <div className="fixed bottom-16 left-0 right-0 bg-black border-t border-white/10 safe-bottom">
+      <div className="fixed bottom-16 lg:bottom-0 left-0 right-0 lg:left-64 bg-black border-t border-white/10 safe-bottom">
         {/* Priority selector */}
-        <div className="px-6 pt-4 pb-2">
-          <div className="flex gap-2 mb-3">
+        <div className="px-6 lg:px-12 pt-4 pb-2">
+          <div className="flex gap-2 mb-3 max-w-6xl">
             <button
               onClick={() => setSelectedPriority('low')}
               className={`flex-1 px-3 py-2 rounded-lg border transition-all duration-200 text-xs ${
@@ -259,20 +259,20 @@ export default function TasksPage() {
           </div>
         </div>
 
-        <div className="px-6 pb-4">
-          <form onSubmit={handleAddTask} className="flex gap-3 max-w-2xl mx-auto">
+        <div className="px-6 lg:px-12 pb-4">
+          <form onSubmit={handleAddTask} className="flex gap-3 max-w-6xl">
             <input
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Add a new task..."
-              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/[0.07] transition-all duration-200 text-base"
+              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/[0.07] transition-all duration-150 text-base"
               autoComplete="off"
             />
             <button
               type="submit"
               disabled={!inputValue.trim()}
-              className="w-14 h-14 rounded-xl bg-white text-black flex items-center justify-center disabled:opacity-10 disabled:bg-white/5 disabled:text-white transition-all duration-200 active:scale-95 hover:scale-105 disabled:hover:scale-100 disabled:active:scale-100"
+              className="w-14 h-14 rounded-xl bg-white text-black flex items-center justify-center disabled:opacity-10 disabled:bg-white/5 disabled:text-white transition-all duration-150 active:scale-95 hover:scale-105 disabled:hover:scale-100 disabled:active:scale-100"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

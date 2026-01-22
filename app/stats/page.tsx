@@ -105,15 +105,15 @@ export default function StatsPage() {
   const hasData = allTimeMetrics.attempted > 0;
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white">
+    <div className="flex flex-col h-screen bg-black text-white lg:ml-64">
       {/* Header */}
-      <div className="safe-top px-6 pt-8 pb-6">
-        <h1 className="text-4xl font-extralight mb-3">Stats</h1>
-        <p className="text-sm opacity-40">Your productivity insights</p>
+      <div className="safe-top px-6 lg:px-12 pt-8 lg:pt-12 pb-6">
+        <h1 className="text-4xl lg:text-5xl font-extralight mb-3">Stats</h1>
+        <p className="text-sm lg:text-base opacity-40">Your productivity insights</p>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto pb-20 px-6">
+      <div className="flex-1 overflow-y-auto pb-20 lg:pb-8 px-6 lg:px-12">
         {!hasData ? (
           <div className="flex flex-col items-center justify-center h-full">
             <div className="w-20 h-20 rounded-full border-2 border-white/10 flex items-center justify-center mb-6">
@@ -127,11 +127,11 @@ export default function StatsPage() {
             </p>
           </div>
         ) : (
-          <>
+          <div className="max-w-7xl">
             {/* Today's stats */}
             <div className="mb-12">
-              <h2 className="text-xs opacity-40 uppercase tracking-wider mb-6">Today</h2>
-              <div className="grid grid-cols-2 gap-4">
+              <h2 className="text-xs lg:text-sm opacity-40 uppercase tracking-wider mb-6">Today</h2>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                 <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
                   <div className="text-5xl font-extralight mb-3">{todayMetrics.completed}</div>
                   <div className="text-sm opacity-40">Completed</div>
@@ -140,20 +140,24 @@ export default function StatsPage() {
                   <div className="text-5xl font-extralight mb-3">{todayMetrics.focusTime}</div>
                   <div className="text-sm opacity-40">Minutes</div>
                 </div>
-              </div>
-              {todayMetrics.abandoned > 0 && (
-                <div className="mt-4 bg-white/[0.02] border border-white/10 rounded-2xl p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm opacity-40">Abandoned Today</span>
-                    <span className="text-2xl font-extralight opacity-60">{todayMetrics.abandoned}</span>
+                {todayMetrics.abandoned > 0 && (
+                  <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
+                    <div className="text-5xl font-extralight mb-3 opacity-60">{todayMetrics.abandoned}</div>
+                    <div className="text-sm opacity-40">Abandoned</div>
                   </div>
-                </div>
-              )}
+                )}
+                {allTimeMetrics.attempted > 5 && (
+                  <div className="hidden lg:block bg-white/[0.02] border border-white/10 rounded-2xl p-6">
+                    <div className="text-5xl font-extralight mb-3">{allTimeMetrics.completionRate}%</div>
+                    <div className="text-sm opacity-40">Success Rate</div>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Completion Rate */}
+            {/* Completion Rate - Mobile */}
             {allTimeMetrics.attempted > 5 && (
-              <div className="mb-12">
+              <div className="mb-12 lg:hidden">
                 <h2 className="text-xs opacity-40 uppercase tracking-wider mb-6">Completion Rate</h2>
                 <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
                   <div className="flex items-end gap-4 mb-4">
@@ -173,23 +177,10 @@ export default function StatsPage() {
               </div>
             )}
 
-            {/* Streak */}
-            {streak > 0 && (
-              <div className="mb-12">
-                <h2 className="text-xs opacity-40 uppercase tracking-wider mb-6">Current Streak</h2>
-                <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 flex items-center justify-between">
-                  <div>
-                    <div className="text-5xl font-extralight mb-2">{streak}</div>
-                    <div className="text-sm opacity-40">Day{streak !== 1 ? 's' : ''}</div>
-                  </div>
-                  <div className="text-6xl opacity-10">🔥</div>
-                </div>
-              </div>
-            )}
-
-            {/* Week chart */}
-            <div className="mb-12">
-              <h2 className="text-xs opacity-40 uppercase tracking-wider mb-6">Last 7 Days</h2>
+            {/* Week chart and Streak Grid */}
+            <div className="mb-12 lg:grid lg:grid-cols-2 lg:gap-6">
+              <div>
+              <h2 className="text-xs lg:text-sm opacity-40 uppercase tracking-wider mb-6 lg:mb-6">Last 7 Days</h2>
               <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
                 <div className="flex items-end justify-between h-48 gap-2">
                   {weekData.map((day) => {
@@ -255,12 +246,29 @@ export default function StatsPage() {
                   </div>
                 </div>
               </div>
+              </div>
+
+              {/* Streak - Desktop in grid, Mobile below chart */}
+              {streak > 0 && (
+                <div className="mt-12 lg:mt-0">
+                  <h2 className="text-xs lg:text-sm opacity-40 uppercase tracking-wider mb-6">Current Streak</h2>
+                  <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 lg:p-8 flex flex-col justify-center h-full">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-5xl lg:text-6xl font-extralight mb-2">{streak}</div>
+                        <div className="text-sm lg:text-base opacity-40">Day{streak !== 1 ? 's' : ''}</div>
+                      </div>
+                      <div className="text-6xl lg:text-7xl opacity-10">🔥</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* All-time stats */}
             <div className="mb-8">
-              <h2 className="text-xs opacity-40 uppercase tracking-wider mb-6">All Time</h2>
-              <div className="space-y-4">
+              <h2 className="text-xs lg:text-sm opacity-40 uppercase tracking-wider mb-6">All Time</h2>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
                 <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 flex items-center justify-between">
                   <div>
                     <div className="text-sm opacity-40 mb-2">Total Completed</div>
@@ -288,7 +296,7 @@ export default function StatsPage() {
                 </div>
               </div>
             </div>
-          </>
+          </div>
         )}
       </div>
 
