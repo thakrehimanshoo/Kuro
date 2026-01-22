@@ -29,16 +29,37 @@ export interface Settings {
   longBreakDuration: number;
 }
 
+export interface JournalEntry {
+  id?: number;
+  title: string;
+  content: string; // HTML content from editor
+  date: string; // YYYY-MM-DD format
+  mood?: string; // Optional mood emoji
+  tags?: string[]; // Optional tags
+  createdAt: number;
+  updatedAt: number;
+}
+
 const db = new Dexie('KuroDB') as Dexie & {
   tasks: EntityTable<Task, 'id'>;
   sessions: EntityTable<PomodoroSession, 'id'>;
   settings: EntityTable<Settings, 'id'>;
+  journal: EntityTable<JournalEntry, 'id'>;
 };
 
+// Version 1: Initial schema
 db.version(1).stores({
   tasks: '++id, completed, createdAt, priority',
   sessions: '++id, date, completedAt, type, taskId, abandoned',
   settings: '++id',
+});
+
+// Version 2: Add journal entries
+db.version(2).stores({
+  tasks: '++id, completed, createdAt, priority',
+  sessions: '++id, date, completedAt, type, taskId, abandoned',
+  settings: '++id',
+  journal: '++id, date, createdAt, updatedAt',
 });
 
 export { db };
