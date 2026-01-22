@@ -119,8 +119,8 @@ export default function TimerPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-black text-white safe-top">
-      <div className="flex-1 flex flex-col items-center justify-center w-full px-6 max-w-md">
+    <div className="flex flex-col items-center justify-center h-screen bg-black text-white safe-top lg:ml-64">
+      <div className="flex-1 flex flex-col items-center justify-center w-full px-6 lg:px-12 max-w-2xl">
         {/* Pomodoro cycle indicator */}
         {type === 'work' && (
           <div className="mb-6 flex items-center gap-2">
