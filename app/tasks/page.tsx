@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useRouter } from 'next/navigation';
 import { db, type Task, type TaskPriority } from '@/lib/db';
@@ -21,11 +21,22 @@ export default function TasksPage() {
     db.tasks.orderBy('createdAt').reverse().toArray()
   );
 
-  const tasks = allTasks?.filter(task => {
-    if (filter === 'active') return !task.completed;
-    if (filter === 'completed') return task.completed;
-    return true;
-  }) || [];
+  // Memoize filtered tasks
+  const tasks = useMemo(() => {
+    if (!allTasks) return [];
+    if (filter === 'active') return allTasks.filter(task => !task.completed);
+    if (filter === 'completed') return allTasks.filter(task => task.completed);
+    return allTasks;
+  }, [allTasks, filter]);
+
+  // Memoize task counts
+  const { activeTasks, completedTasks } = useMemo(() => {
+    if (!allTasks) return { activeTasks: 0, completedTasks: 0 };
+    return {
+      activeTasks: allTasks.filter(t => !t.completed).length,
+      completedTasks: allTasks.filter(t => t.completed).length,
+    };
+  }, [allTasks]);
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,9 +69,6 @@ export default function TasksPage() {
       router.push('/');
     }
   };
-
-  const activeTasks = allTasks?.filter(t => !t.completed).length || 0;
-  const completedTasks = allTasks?.filter(t => t.completed).length || 0;
 
   const getPriorityColor = (priority: TaskPriority) => {
     switch (priority) {

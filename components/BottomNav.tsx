@@ -1,6 +1,7 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 
 const tabs = [
   { name: 'Tasks', path: '/tasks', icon: CheckSquareIcon },
@@ -11,26 +12,26 @@ const tabs = [
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const router = useRouter();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-white/10 safe-bottom">
-      <div className="flex justify-around items-center h-16">
+    <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-white/10 safe-bottom z-50">
+      <div className="flex justify-around items-center h-16 max-w-2xl mx-auto">
         {tabs.map((tab) => {
           const isActive = pathname === tab.path;
           const Icon = tab.icon;
 
           return (
-            <button
+            <Link
               key={tab.path}
-              onClick={() => router.push(tab.path)}
-              className={`flex flex-col items-center justify-center flex-1 h-full transition-opacity duration-200 ${
+              href={tab.path}
+              prefetch={true}
+              className={`flex flex-col items-center justify-center flex-1 h-full transition-opacity duration-150 ${
                 isActive ? 'opacity-100' : 'opacity-40'
               }`}
             >
               <Icon className="w-6 h-6 mb-1" />
               <span className="text-xs">{tab.name}</span>
-            </button>
+            </Link>
           );
         })}
       </div>

@@ -29,25 +29,27 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Desktop/Web responsive override */
+@media (min-width: 768px) {
+  body {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+}
+
 #__next {
   height: 100%;
 }
 
-/* Smooth transitions - improved timing */
-* {
+/* Optimized transitions - only for interactive elements */
+button,
+a,
+input,
+select,
+.transition-all {
   transition-property: opacity, transform, background-color, border-color, color;
-  transition-duration: 200ms;
+  transition-duration: 150ms;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Prevent layout shift transitions */
-*[class*="text-"],
-*[class*="w-"],
-*[class*="h-"],
-*[class*="gap-"],
-*[class*="p-"],
-*[class*="m-"] {
-  transition-property: opacity, transform, background-color, border-color, color;
 }
 
 @layer utilities {
@@ -255,5 +257,104 @@ input:disabled {
   .backdrop-blur-enabled {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+  }
+}
+
+/* ===== RESPONSIVE WEB DESIGN ===== */
+
+/* Tablet and above */
+@media (min-width: 768px) {
+  /* Allow scrolling on desktop */
+  html,
+  body {
+    overflow: auto;
+  }
+
+  /* Center content with max width */
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    height: auto;
+  }
+
+  /* Main container max width */
+  #__next {
+    width: 100%;
+    max-width: 640px;
+    min-height: 100vh;
+    position: relative;
+    box-shadow: 0 0 50px rgba(255, 255, 255, 0.05);
+  }
+
+  /* Enable hover effects on desktop */
+  .hover\:opacity-70:hover {
+    opacity: 0.7;
+  }
+
+  .hover\:scale-105:hover {
+    transform: scale(1.05);
+  }
+
+  .hover\:bg-white\/10:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Better scrollbars on desktop */
+  ::-webkit-scrollbar {
+    display: block;
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  * {
+    -ms-overflow-style: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
+
+  /* Desktop navigation adjustments */
+  nav {
+    border-radius: 0;
+  }
+}
+
+/* Desktop and above */
+@media (min-width: 1024px) {
+  #__next {
+    max-width: 768px;
+  }
+
+  /* Larger text on desktop for readability */
+  .text-4xl {
+    font-size: 3rem;
+  }
+
+  .text-5xl {
+    font-size: 3.5rem;
+  }
+
+  .text-6xl {
+    font-size: 4rem;
+  }
+}
+
+/* Large desktop */
+@media (min-width: 1280px) {
+  #__next {
+    max-width: 896px;
   }
 }
