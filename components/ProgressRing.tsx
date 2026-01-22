@@ -20,6 +20,7 @@ export default function ProgressRing({
       width={size}
       height={size}
       className="transform -rotate-90"
+      style={{ willChange: 'transform' }}
     >
       {/* Background circle */}
       <circle
@@ -42,6 +43,7 @@ export default function ProgressRing({
         strokeDashoffset={offset}
         strokeLinecap="round"
         className="transition-all duration-1000 ease-linear"
+        style={{ willChange: 'stroke-dashoffset' }}
       />
     </svg>
   );
