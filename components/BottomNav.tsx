@@ -6,7 +6,7 @@ import Link from 'next/link';
 const tabs = [
   { name: 'Tasks', path: '/tasks', icon: CheckSquareIcon },
   { name: 'Timer', path: '/', icon: ClockIcon },
-  { name: 'Journal', path: '/journal', icon: BookIcon },
+  { name: 'Notes', path: '/notes', icon: BookIcon },
   { name: 'Stats', path: '/stats', icon: BarChartIcon },
   { name: 'Settings', path: '/settings', icon: SettingsIcon },
 ];
