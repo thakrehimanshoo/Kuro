@@ -19,7 +19,6 @@ export default function TimerPage() {
     start,
     pause,
     reset,
-    tick,
     skipToNext,
     abandon,
   } = useTimerStore();
@@ -29,15 +28,8 @@ export default function TimerPage() {
     [activeTaskId]
   );
 
-  useEffect(() => {
-    if (status === 'running') {
-      const interval = setInterval(() => {
-        tick();
-      }, 1000);
-
-      return () => clearInterval(interval);
-    }
-  }, [status, tick]);
+  // Timer tick is now handled globally by GlobalTimerProvider in layout
+  // This ensures the timer continues running when navigating between pages
 
   useEffect(() => {
     // Save completed session to database and create calendar event

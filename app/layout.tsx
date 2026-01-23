@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/auth-context";
+import { GlobalTimerProvider } from "@/components/GlobalTimerProvider";
 
 export const metadata: Metadata = {
   title: "Kuro",
@@ -38,7 +39,9 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <AuthProvider>
-          {children}
+          <GlobalTimerProvider>
+            {children}
+          </GlobalTimerProvider>
         </AuthProvider>
       </body>
     </html>
