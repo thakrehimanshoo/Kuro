@@ -63,7 +63,6 @@ export default function DatePicker({ value, onChange, placeholder = 'Select date
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
     onChange('');
-    setIsOpen(false);
   };
 
   return (
@@ -72,7 +71,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Select date
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-left text-white focus:outline-none focus:border-white/30 transition-all flex items-center justify-between"
+        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-left text-white text-sm focus:outline-none focus:border-white/30 transition-all flex items-center justify-between"
       >
         <span className={selectedDate ? '' : 'opacity-30'}>
           {selectedDate ? format(selectedDate, 'MMM d, yyyy') : placeholder}
@@ -86,7 +85,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Select date
               ✕
             </button>
           )}
-          <svg className="w-5 h-5 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
         </div>
@@ -94,21 +93,29 @@ export default function DatePicker({ value, onChange, placeholder = 'Select date
 
       {/* Calendar dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-black border border-white/20 rounded-2xl p-4 z-50 shadow-2xl backdrop-blur-xl">
+        <div className="absolute top-full left-0 mt-2 bg-[#202124] border border-white/10 rounded-xl p-4 z-[100] shadow-2xl min-w-[320px]">
           {/* Month navigation */}
           <div className="flex items-center justify-between mb-4">
             <button
-              onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-              className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg transition-all"
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                setCurrentMonth(subMonths(currentMonth, 1));
+              }}
+              className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-full transition-all text-lg"
             >
               ‹
             </button>
-            <div className="font-medium">
+            <div className="font-medium text-sm">
               {format(currentMonth, 'MMMM yyyy')}
             </div>
             <button
-              onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-              className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg transition-all"
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                setCurrentMonth(addMonths(currentMonth, 1));
+              }}
+              className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-full transition-all text-lg"
             >
               ›
             </button>
@@ -117,7 +124,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Select date
           {/* Day labels */}
           <div className="grid grid-cols-7 gap-1 mb-2">
             {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-              <div key={i} className="text-center text-xs opacity-40 font-medium py-2">
+              <div key={i} className="text-center text-xs opacity-50 font-medium py-2">
                 {day}
               </div>
             ))}
@@ -134,12 +141,14 @@ export default function DatePicker({ value, onChange, placeholder = 'Select date
                 <button
                   key={i}
                   type="button"
-                  onClick={() => handleDateSelect(day)}
-                  disabled={!isCurrentMonth}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleDateSelect(day);
+                  }}
                   className={`
-                    aspect-square rounded-lg flex items-center justify-center text-sm transition-all
-                    ${isSelected ? 'bg-white text-black font-medium' : 'hover:bg-white/10'}
-                    ${!isCurrentMonth ? 'opacity-20 cursor-not-allowed' : ''}
+                    w-9 h-9 rounded-full flex items-center justify-center text-sm transition-all
+                    ${isSelected ? 'bg-[#8ab4f8] text-[#202124] font-medium hover:bg-[#aecbfa]' : 'hover:bg-white/10'}
+                    ${!isCurrentMonth ? 'opacity-40' : ''}
                     ${isTodayDate && !isSelected ? 'border border-white/30' : ''}
                   `}
                 >
@@ -153,14 +162,21 @@ export default function DatePicker({ value, onChange, placeholder = 'Select date
           <div className="flex gap-2 mt-4 pt-4 border-t border-white/10">
             <button
               type="button"
-              onClick={() => handleDateSelect(new Date())}
+              onClick={(e) => {
+                e.preventDefault();
+                handleDateSelect(new Date());
+              }}
               className="flex-1 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs transition-all"
             >
               Today
             </button>
             <button
               type="button"
-              onClick={handleClear}
+              onClick={(e) => {
+                e.preventDefault();
+                handleClear(e);
+                setIsOpen(false);
+              }}
               className="flex-1 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs transition-all"
             >
               Clear
