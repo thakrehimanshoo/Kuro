@@ -398,7 +398,7 @@ export default function NotesPage() {
         {selectedNoteId ? (
           <>
             <div className="p-6 lg:p-8 border-b border-white/10">
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={() => setShowNotesList(true)}
                   className="lg:hidden w-10 h-10 flex items-center justify-center rounded-lg bg-white/5"
@@ -412,6 +412,9 @@ export default function NotesPage() {
                   placeholder="Untitled"
                   className="flex-1 text-3xl lg:text-4xl font-extralight bg-transparent outline-none"
                 />
+                {isSaving && (
+                  <span className="text-xs opacity-40 whitespace-nowrap">Saving...</span>
+                )}
                 <button
                   onClick={() => currentNote && togglePin(currentNote.id!, currentNote.isPinned)}
                   className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/5"
@@ -427,9 +430,6 @@ export default function NotesPage() {
                   🗑️
                 </button>
               </div>
-              {isSaving && (
-                <span className="text-xs opacity-40">Saving...</span>
-              )}
             </div>
 
             <div className="flex-1 overflow-y-auto">

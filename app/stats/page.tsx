@@ -5,6 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { getTodayDate, getWeekDates } from '@/lib/utils';
 import BottomNav from '@/components/BottomNav';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 
 export default function StatsPage() {
   const todayDate = getTodayDate();
@@ -15,6 +16,7 @@ export default function StatsPage() {
   );
 
   const allSessions = useLiveQuery(() => db.sessions.toArray());
+  const allTasks = useLiveQuery(() => db.tasks.toArray());
 
   // Memoize week data calculation
   const weekData = useMemo(() => {
@@ -35,6 +37,74 @@ export default function StatsPage() {
       };
     });
   }, [allSessions]);
+
+  // Month heatmap
+  const monthHeatmap = useMemo(() => {
+    if (!allSessions) return [];
+
+    const now = new Date();
+    const start = startOfMonth(now);
+    const end = endOfMonth(now);
+    const days = eachDayOfInterval({ start, end });
+
+    return days.map((day) => {
+      const dateStr = format(day, 'yyyy-MM-dd');
+      const sessions = allSessions.filter(
+        (s) => s.date === dateStr && s.type === 'work' && !s.abandoned
+      );
+
+      return {
+        date: dateStr,
+        day: day.getDate(),
+        dayOfWeek: day.getDay(),
+        count: sessions.length,
+        duration: sessions.reduce((sum, s) => sum + s.duration, 0),
+      };
+    });
+  }, [allSessions]);
+
+  // Time of day analysis
+  const timeOfDayData = useMemo(() => {
+    if (!allSessions) return [];
+
+    const hours = Array.from({ length: 24 }, (_, i) => i);
+    return hours.map((hour) => {
+      const sessionsInHour = allSessions.filter((s) => {
+        if (s.type !== 'work' || s.abandoned) return false;
+
+        const sessionDate = new Date(s.completedAt);
+        return sessionDate.getHours() === hour;
+      });
+
+      return {
+        hour,
+        count: sessionsInHour.length,
+        label: hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`,
+      };
+    });
+  }, [allSessions]);
+
+  const peakHour = useMemo(() => {
+    const maxCount = Math.max(...timeOfDayData.map((d) => d.count), 0);
+    return timeOfDayData.find((d) => d.count === maxCount);
+  }, [timeOfDayData]);
+
+  // Task completion stats
+  const taskStats = useMemo(() => {
+    if (!allTasks) return { completed: 0, pending: 0, overdue: 0, completionRate: 0 };
+
+    const completed = allTasks.filter((t) => t.completed).length;
+    const pending = allTasks.filter((t) => !t.completed).length;
+    const overdue = allTasks.filter((t) => !t.completed && t.dueDate && t.dueDate < Date.now()).length;
+    const total = allTasks.length;
+
+    return {
+      completed,
+      pending,
+      overdue,
+      completionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
+    };
+  }, [allTasks]);
 
   // Memoize today's metrics
   const todayMetrics = useMemo(() => {
@@ -73,8 +143,8 @@ export default function StatsPage() {
   const streak = useMemo(() => {
     if (!allSessions || allSessions.length === 0) return 0;
 
-    const workSessions = allSessions.filter(s => s.type === 'work' && !s.abandoned);
-    const uniqueDates = [...new Set(workSessions.map(s => s.date))].sort().reverse();
+    const workSessions = allSessions.filter((s) => s.type === 'work' && !s.abandoned);
+    const uniqueDates = [...new Set(workSessions.map((s) => s.date))].sort().reverse();
 
     let currentStreak = 0;
     const today = getTodayDate();
@@ -102,7 +172,17 @@ export default function StatsPage() {
     [weekData]
   );
 
+  const maxHeatmapCount = useMemo(() =>
+    Math.max(...monthHeatmap.map((d) => d.count), 1),
+    [monthHeatmap]
+  );
+
   const hasData = allTimeMetrics.attempted > 0;
+
+  const getHeatmapOpacity = (count: number) => {
+    if (count === 0) return 0.05;
+    return 0.3 + (count / maxHeatmapCount) * 0.7;
+  };
 
   return (
     <div className="flex flex-col h-screen bg-black text-white lg:ml-64">
@@ -127,164 +207,259 @@ export default function StatsPage() {
             </p>
           </div>
         ) : (
-          <div className="max-w-7xl">
-            {/* Today's stats */}
-            <div className="mb-12">
-              <h2 className="text-xs lg:text-sm opacity-40 uppercase tracking-wider mb-6">Today</h2>
+          <div className="max-w-7xl space-y-12">
+            {/* Today's Overview */}
+            <div>
+              <h2 className="text-xs lg:text-sm opacity-40 uppercase tracking-wider mb-6">Today&apos;s Progress</h2>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-                <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
+                <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20 rounded-2xl p-6">
                   <div className="text-5xl font-extralight mb-3">{todayMetrics.completed}</div>
-                  <div className="text-sm opacity-40">Completed</div>
+                  <div className="text-sm opacity-60">Sessions</div>
                 </div>
-                <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
+                <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-2xl p-6">
                   <div className="text-5xl font-extralight mb-3">{todayMetrics.focusTime}</div>
-                  <div className="text-sm opacity-40">Minutes</div>
+                  <div className="text-sm opacity-60">Minutes</div>
                 </div>
-                {todayMetrics.abandoned > 0 && (
-                  <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
-                    <div className="text-5xl font-extralight mb-3 opacity-60">{todayMetrics.abandoned}</div>
-                    <div className="text-sm opacity-40">Abandoned</div>
-                  </div>
-                )}
-                {allTimeMetrics.attempted > 5 && (
-                  <div className="hidden lg:block bg-white/[0.02] border border-white/10 rounded-2xl p-6">
-                    <div className="text-5xl font-extralight mb-3">{allTimeMetrics.completionRate}%</div>
-                    <div className="text-sm opacity-40">Success Rate</div>
-                  </div>
-                )}
+                <div className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20 rounded-2xl p-6">
+                  <div className="text-5xl font-extralight mb-3">{streak}</div>
+                  <div className="text-sm opacity-60">Day Streak</div>
+                </div>
+                <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border border-yellow-500/20 rounded-2xl p-6">
+                  <div className="text-5xl font-extralight mb-3">{taskStats.completionRate}%</div>
+                  <div className="text-sm opacity-60">Tasks Done</div>
+                </div>
               </div>
             </div>
 
-            {/* Completion Rate - Mobile */}
-            {allTimeMetrics.attempted > 5 && (
-              <div className="mb-12 lg:hidden">
-                <h2 className="text-xs opacity-40 uppercase tracking-wider mb-6">Completion Rate</h2>
+            {/* Week Chart and Task Stats */}
+            <div className="lg:grid lg:grid-cols-2 lg:gap-6 space-y-12 lg:space-y-0">
+              {/* Week Chart */}
+              <div>
+                <h2 className="text-xs lg:text-sm opacity-40 uppercase tracking-wider mb-6">Last 7 Days</h2>
                 <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
-                  <div className="flex items-end gap-4 mb-4">
-                    <div className="text-6xl font-extralight">{allTimeMetrics.completionRate}%</div>
-                    <div className="pb-2 opacity-40 text-sm">
-                      {allTimeMetrics.completed} of {allTimeMetrics.attempted}
+                  <div className="flex items-end justify-between h-48 gap-2">
+                    {weekData.map((day) => {
+                      const total = day.completed + day.abandoned;
+                      const completedHeight = maxCount > 0 ? (day.completed / maxCount) * 100 : 0;
+                      const abandonedHeight = maxCount > 0 ? (day.abandoned / maxCount) * 100 : 0;
+                      const date = new Date(day.date);
+                      const dayLabel = date.toLocaleDateString('en-US', { weekday: 'short' }).substring(0, 1);
+                      const isToday = day.date === todayDate;
+
+                      return (
+                        <div key={day.date} className="flex-1 flex flex-col items-center justify-end h-full group">
+                          <div className="w-full flex flex-col items-center justify-end flex-1 mb-3 relative">
+                            {total > 0 && (
+                              <div className="text-xs opacity-0 group-hover:opacity-60 transition-opacity duration-200 mb-2 absolute -top-6">
+                                {day.completed}{day.abandoned > 0 && ` +${day.abandoned}`}
+                              </div>
+                            )}
+                            <div className="w-full flex flex-col-reverse gap-[2px]">
+                              {/* Completed sessions */}
+                              {day.completed > 0 && (
+                                <div
+                                  className={`w-full rounded-t-md transition-all duration-300 ${
+                                    isToday ? 'bg-white' : 'bg-white/70'
+                                  } hover:bg-white`}
+                                  style={{
+                                    height: `${completedHeight}%`,
+                                    minHeight: '8px',
+                                  }}
+                                />
+                              )}
+                              {/* Abandoned sessions */}
+                              {day.abandoned > 0 && (
+                                <div
+                                  className="w-full bg-white/20 rounded-t-md transition-all duration-300 hover:bg-white/30"
+                                  style={{
+                                    height: `${abandonedHeight}%`,
+                                    minHeight: '4px',
+                                  }}
+                                />
+                              )}
+                            </div>
+                          </div>
+                          <div
+                            className={`text-xs ${
+                              isToday ? 'opacity-100 font-medium' : 'opacity-40'
+                            }`}
+                          >
+                            {dayLabel}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex items-center justify-center gap-6 mt-6 text-xs opacity-40">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-white rounded-sm" />
+                      <span>Completed</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-white/20 rounded-sm" />
+                      <span>Abandoned</span>
                     </div>
                   </div>
-                  {/* Progress bar */}
-                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                </div>
+              </div>
+
+              {/* Task Stats */}
+              <div>
+                <h2 className="text-xs lg:text-sm opacity-40 uppercase tracking-wider mb-6">Task Overview</h2>
+                <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 h-[280px] flex flex-col justify-center">
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm opacity-60">Completed</span>
+                        <span className="text-2xl font-extralight">{taskStats.completed}</span>
+                      </div>
+                      <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-green-500 transition-all duration-500"
+                          style={{ width: `${taskStats.completionRate}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm opacity-60">Pending</span>
+                        <span className="text-2xl font-extralight">{taskStats.pending}</span>
+                      </div>
+                      <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-yellow-500 transition-all duration-500"
+                          style={{
+                            width: `${taskStats.pending > 0 ? (taskStats.pending / (taskStats.completed + taskStats.pending)) * 100 : 0}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                    {taskStats.overdue > 0 && (
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm opacity-60">Overdue</span>
+                          <span className="text-2xl font-extralight text-red-400">{taskStats.overdue}</span>
+                        </div>
+                        <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-red-500 transition-all duration-500"
+                            style={{
+                              width: `${(taskStats.overdue / taskStats.pending) * 100}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Month Heatmap */}
+            <div>
+              <h2 className="text-xs lg:text-sm opacity-40 uppercase tracking-wider mb-6">This Month</h2>
+              <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
+                <div className="grid grid-cols-7 gap-2">
+                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                    <div key={i} className="text-center text-xs opacity-40 mb-2">
+                      {day}
+                    </div>
+                  ))}
+
+                  {/* Empty cells for first week */}
+                  {monthHeatmap.length > 0 &&
+                    Array.from({ length: monthHeatmap[0].dayOfWeek }).map((_, i) => (
+                      <div key={`empty-${i}`} className="aspect-square" />
+                    ))}
+
+                  {monthHeatmap.map((day) => (
                     <div
-                      className="h-full bg-white transition-all duration-500"
-                      style={{ width: `${allTimeMetrics.completionRate}%` }}
-                    />
+                      key={day.date}
+                      className="aspect-square rounded-lg border border-white/10 flex items-center justify-center text-xs group relative transition-all duration-200 hover:border-white/30"
+                      style={{
+                        backgroundColor: `rgba(255, 255, 255, ${getHeatmapOpacity(day.count)})`,
+                      }}
+                    >
+                      <span className={day.count > 0 ? 'text-black font-medium' : 'opacity-60'}>
+                        {day.day}
+                      </span>
+                      {day.count > 0 && (
+                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black border border-white/20 rounded px-2 py-1 text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                          {day.count} session{day.count !== 1 ? 's' : ''}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Productivity by Time */}
+            {peakHour && peakHour.count > 0 && (
+              <div>
+                <h2 className="text-xs lg:text-sm opacity-40 uppercase tracking-wider mb-6">
+                  Productivity by Time
+                </h2>
+                <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <div className="text-sm opacity-60 mb-1">Peak Hour</div>
+                      <div className="text-3xl font-extralight">{peakHour.label}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm opacity-60 mb-1">Sessions</div>
+                      <div className="text-3xl font-extralight">{peakHour.count}</div>
+                    </div>
+                  </div>
+                  <div className="h-32 flex items-end gap-1">
+                    {timeOfDayData.map((hour) => {
+                      const maxHourCount = Math.max(...timeOfDayData.map((d) => d.count), 1);
+                      const height = (hour.count / maxHourCount) * 100;
+
+                      if (hour.count === 0) return <div key={hour.hour} className="flex-1" />;
+
+                      return (
+                        <div
+                          key={hour.hour}
+                          className="flex-1 bg-white/20 rounded-t hover:bg-white/40 transition-all relative group"
+                          style={{ height: `${height}%`, minHeight: '4px' }}
+                        >
+                          <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black border border-white/20 rounded px-2 py-1 text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                            {hour.label}: {hour.count}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-between mt-4 text-xs opacity-40">
+                    <span>12 AM</span>
+                    <span>6 AM</span>
+                    <span>12 PM</span>
+                    <span>6 PM</span>
+                    <span>11 PM</span>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Week chart and Streak Grid */}
-            <div className="mb-12 lg:grid lg:grid-cols-2 lg:gap-6">
-              <div>
-              <h2 className="text-xs lg:text-sm opacity-40 uppercase tracking-wider mb-6 lg:mb-6">Last 7 Days</h2>
-              <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
-                <div className="flex items-end justify-between h-48 gap-2">
-                  {weekData.map((day) => {
-                    const total = day.completed + day.abandoned;
-                    const completedHeight = maxCount > 0 ? (day.completed / maxCount) * 100 : 0;
-                    const abandonedHeight = maxCount > 0 ? (day.abandoned / maxCount) * 100 : 0;
-                    const date = new Date(day.date);
-                    const dayLabel = date.toLocaleDateString('en-US', { weekday: 'short' }).substring(0, 1);
-                    const isToday = day.date === todayDate;
-
-                    return (
-                      <div key={day.date} className="flex-1 flex flex-col items-center justify-end h-full group">
-                        <div className="w-full flex flex-col items-center justify-end flex-1 mb-3 relative">
-                          {total > 0 && (
-                            <div className="text-xs opacity-0 group-hover:opacity-60 transition-opacity duration-200 mb-2 absolute -top-6">
-                              {day.completed}{day.abandoned > 0 && ` +${day.abandoned}`}
-                            </div>
-                          )}
-                          <div className="w-full flex flex-col-reverse gap-[2px]">
-                            {/* Completed sessions */}
-                            {day.completed > 0 && (
-                              <div
-                                className={`w-full rounded-t-md transition-all duration-300 ${
-                                  isToday ? 'bg-white' : 'bg-white/70'
-                                } hover:bg-white`}
-                                style={{
-                                  height: `${completedHeight}%`,
-                                  minHeight: '8px',
-                                }}
-                              />
-                            )}
-                            {/* Abandoned sessions */}
-                            {day.abandoned > 0 && (
-                              <div
-                                className="w-full bg-white/20 rounded-t-md transition-all duration-300 hover:bg-white/30"
-                                style={{
-                                  height: `${abandonedHeight}%`,
-                                  minHeight: '4px',
-                                }}
-                              />
-                            )}
-                          </div>
-                        </div>
-                        <div
-                          className={`text-xs ${
-                            isToday ? 'opacity-100 font-medium' : 'opacity-40'
-                          }`}
-                        >
-                          {dayLabel}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="flex items-center justify-center gap-6 mt-6 text-xs opacity-40">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-white rounded-sm" />
-                    <span>Completed</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-white/20 rounded-sm" />
-                    <span>Abandoned</span>
-                  </div>
-                </div>
-              </div>
-              </div>
-
-              {/* Streak - Desktop in grid, Mobile below chart */}
-              {streak > 0 && (
-                <div className="mt-12 lg:mt-0">
-                  <h2 className="text-xs lg:text-sm opacity-40 uppercase tracking-wider mb-6">Current Streak</h2>
-                  <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 lg:p-8 flex flex-col justify-center h-full">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-5xl lg:text-6xl font-extralight mb-2">{streak}</div>
-                        <div className="text-sm lg:text-base opacity-40">Day{streak !== 1 ? 's' : ''}</div>
-                      </div>
-                      <div className="text-6xl lg:text-7xl opacity-10">🔥</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* All-time stats */}
-            <div className="mb-8">
+            <div>
               <h2 className="text-xs lg:text-sm opacity-40 uppercase tracking-wider mb-6">All Time</h2>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
                 <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 flex items-center justify-between">
                   <div>
-                    <div className="text-sm opacity-40 mb-2">Total Completed</div>
+                    <div className="text-sm opacity-40 mb-2">Total Sessions</div>
                     <div className="text-3xl font-extralight">{allTimeMetrics.completed}</div>
                   </div>
                   <div className="text-4xl opacity-10">✓</div>
                 </div>
-                {allTimeMetrics.abandoned > 0 && (
-                  <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 flex items-center justify-between">
-                    <div>
-                      <div className="text-sm opacity-40 mb-2">Total Abandoned</div>
-                      <div className="text-3xl font-extralight opacity-60">{allTimeMetrics.abandoned}</div>
-                    </div>
-                    <div className="text-4xl opacity-10">⊗</div>
+                <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 flex items-center justify-between">
+                  <div>
+                    <div className="text-sm opacity-40 mb-2">Success Rate</div>
+                    <div className="text-3xl font-extralight">{allTimeMetrics.completionRate}%</div>
                   </div>
-                )}
+                  <div className="text-4xl opacity-10">📈</div>
+                </div>
                 <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 flex items-center justify-between">
                   <div>
                     <div className="text-sm opacity-40 mb-2">Total Focus Time</div>
