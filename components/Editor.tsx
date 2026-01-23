@@ -6,7 +6,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import Underline from '@tiptap/extension-underline';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface EditorProps {
   content: string;
@@ -15,6 +15,8 @@ interface EditorProps {
 }
 
 export default function Editor({ content, onChange, placeholder = 'Start writing...' }: EditorProps) {
+  const isUpdatingRef = useRef(false);
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -39,18 +41,31 @@ export default function Editor({ content, onChange, placeholder = 'Start writing
       },
     },
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      if (!isUpdatingRef.current) {
+        onChange(editor.getHTML());
+      }
     },
   });
 
+  // Only update editor content when it's different from external changes
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
+      isUpdatingRef.current = true;
       editor.commands.setContent(content);
+      isUpdatingRef.current = false;
     }
   }, [content, editor]);
 
   if (!editor) {
-    return null;
+    return (
+      <div className="p-6 lg:p-8">
+        <div className="animate-pulse">
+          <div className="h-4 bg-white/10 rounded w-3/4 mb-4"></div>
+          <div className="h-4 bg-white/10 rounded w-full mb-4"></div>
+          <div className="h-4 bg-white/10 rounded w-5/6"></div>
+        </div>
+      </div>
+    );
   }
 
   return (

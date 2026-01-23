@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, Note, Notebook } from '@/lib/db';
+import { db, Notebook } from '@/lib/db';
 import { seedNotesDatabase } from '@/lib/notes-seed';
 import BottomNav from '@/components/BottomNav';
 import Editor from '@/components/Editor';
+import QuickSwitcher from '@/components/QuickSwitcher';
 
 export default function NotesPage() {
   const [selectedNotebookId, setSelectedNotebookId] = useState<number | null>(null);
@@ -17,10 +18,26 @@ export default function NotesPage() {
   const [noteContent, setNoteContent] = useState('');
   const [noteTags, setNoteTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [editingNotebookId, setEditingNotebookId] = useState<number | null>(null);
+  const [editingNotebookName, setEditingNotebookName] = useState('');
+  const [showQuickSwitcher, setShowQuickSwitcher] = useState(false);
 
   // Seed database on first load
   useEffect(() => {
     seedNotesDatabase();
+  }, []);
+
+  // Quick Switcher keyboard shortcut (Cmd+O / Ctrl+O)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'o') {
+        e.preventDefault();
+        setShowQuickSwitcher(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   // Get all notebooks
@@ -77,40 +94,51 @@ export default function NotesPage() {
     [selectedNoteId]
   );
 
+  // Track if we're loading a note to prevent auto-save
+  const isLoadingNote = useRef(false);
+
   // Load note into editor
   useEffect(() => {
     if (currentNote) {
+      isLoadingNote.current = true;
       setNoteTitle(currentNote.title);
       setNoteContent(currentNote.content);
       setNoteTags(currentNote.tags || []);
+      // Allow auto-save after a brief delay
+      setTimeout(() => {
+        isLoadingNote.current = false;
+      }, 100);
     } else {
+      isLoadingNote.current = false;
       setNoteTitle('');
       setNoteContent('');
       setNoteTags([]);
     }
   }, [currentNote]);
 
-  // Auto-save
-  const saveNote = useCallback(async () => {
-    if (!selectedNoteId || !noteTitle.trim()) return;
+  // Auto-save with debounce
+  useEffect(() => {
+    if (!selectedNoteId || !noteTitle.trim() || isLoadingNote.current) return;
 
     setIsSaving(true);
-    try {
-      await db.notes.update(selectedNoteId, {
-        title: noteTitle,
-        content: noteContent,
-        tags: noteTags,
-        updatedAt: Date.now(),
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  }, [selectedNoteId, noteTitle, noteContent, noteTags]);
+    const timeout = setTimeout(async () => {
+      try {
+        await db.notes.update(selectedNoteId, {
+          title: noteTitle,
+          content: noteContent,
+          tags: noteTags,
+          updatedAt: Date.now(),
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    }, 1000);
 
-  useEffect(() => {
-    const timeout = setTimeout(saveNote, 1000);
-    return () => clearTimeout(timeout);
-  }, [noteTitle, noteContent, noteTags, saveNote]);
+    return () => {
+      clearTimeout(timeout);
+      setIsSaving(false);
+    };
+  }, [noteTitle, noteContent, noteTags, selectedNoteId]);
 
   // Create new note
   const createNote = async () => {
@@ -145,6 +173,45 @@ export default function NotesPage() {
   // Toggle pin
   const togglePin = async (noteId: number, isPinned: boolean) => {
     await db.notes.update(noteId, { isPinned: !isPinned });
+  };
+
+  // Notebook management
+  const startEditingNotebook = (notebook: Notebook) => {
+    setEditingNotebookId(notebook.id!);
+    setEditingNotebookName(notebook.name);
+  };
+
+  const saveNotebookName = async (notebookId: number) => {
+    if (editingNotebookName.trim()) {
+      await db.notebooks.update(notebookId, {
+        name: editingNotebookName.trim(),
+        updatedAt: Date.now(),
+      });
+    }
+    setEditingNotebookId(null);
+    setEditingNotebookName('');
+  };
+
+  const deleteNotebook = async (notebookId: number) => {
+    const notebook = notebooks?.find((nb) => nb.id === notebookId);
+    if (notebook?.isDefault) {
+      alert('Cannot delete the default notebook');
+      return;
+    }
+
+    const noteCount = await db.notes.where('notebookId').equals(notebookId).count();
+    if (noteCount > 0) {
+      if (!confirm(`This notebook has ${noteCount} notes. Delete anyway? Notes will be permanently deleted.`)) {
+        return;
+      }
+      // Delete all notes in notebook
+      await db.notes.where('notebookId').equals(notebookId).delete();
+    }
+
+    await db.notebooks.delete(notebookId);
+    if (selectedNotebookId === notebookId && defaultNotebook) {
+      setSelectedNotebookId(defaultNotebook.id!);
+    }
   };
 
   return (
@@ -183,23 +250,63 @@ export default function NotesPage() {
 
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
           {notebooks?.map((nb) => (
-            <button
+            <div
               key={nb.id}
-              onClick={() => {
-                setSelectedNotebookId(nb.id!);
-                setShowSidebar(false);
-              }}
-              className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-150 ${
+              className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-150 group ${
                 selectedNotebookId === nb.id
                   ? 'bg-white/10'
                   : 'bg-white/[0.02] hover:bg-white/5'
               }`}
             >
-              <div className="flex items-center gap-2">
-                <span className="text-lg">{nb.icon || '📁'}</span>
-                <span className="text-sm font-medium truncate">{nb.name}</span>
-              </div>
-            </button>
+              {editingNotebookId === nb.id ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{nb.icon || '📁'}</span>
+                  <input
+                    type="text"
+                    value={editingNotebookName}
+                    onChange={(e) => setEditingNotebookName(e.target.value)}
+                    onBlur={() => saveNotebookName(nb.id!)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveNotebookName(nb.id!);
+                      if (e.key === 'Escape') setEditingNotebookId(null);
+                    }}
+                    className="flex-1 bg-white/10 border border-white/20 rounded px-2 py-1 text-sm outline-none"
+                    autoFocus
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setSelectedNotebookId(nb.id!);
+                      setShowSidebar(false);
+                    }}
+                    className="flex items-center gap-2 flex-1 min-w-0"
+                  >
+                    <span className="text-lg">{nb.icon || '📁'}</span>
+                    <span className="text-sm font-medium truncate">{nb.name}</span>
+                  </button>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => startEditingNotebook(nb)}
+                      className="w-7 h-7 flex items-center justify-center rounded hover:bg-white/10"
+                      title="Rename"
+                    >
+                      ✏️
+                    </button>
+                    {!nb.isDefault && (
+                      <button
+                        onClick={() => deleteNotebook(nb.id!)}
+                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-white/10"
+                        title="Delete"
+                      >
+                        🗑️
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           ))}
         </div>
       </div>
@@ -343,6 +450,34 @@ export default function NotesPage() {
       </div>
 
       <BottomNav />
+
+      {/* Quick Switcher (Cmd+O / Ctrl+O) */}
+      <QuickSwitcher
+        isOpen={showQuickSwitcher}
+        onClose={() => setShowQuickSwitcher(false)}
+        notes={allNotes || []}
+        onSelectNote={(noteId) => {
+          setSelectedNoteId(noteId);
+          setShowNotesList(false);
+        }}
+        onCreateNote={async (title) => {
+          if (selectedNotebookId) {
+            const noteId = await db.notes.add({
+              notebookId: selectedNotebookId,
+              title,
+              content: '<p></p>',
+              tags: [],
+              isPinned: false,
+              isFavorite: false,
+              isArchived: false,
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            });
+            setSelectedNoteId(noteId as number);
+            setShowNotesList(false);
+          }
+        }}
+      />
     </div>
   );
 }
