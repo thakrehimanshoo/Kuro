@@ -34,6 +34,8 @@ interface TimerState {
   setAutoStart: (breaks: boolean, pomodoros: boolean) => void;
   resetCycle: () => void;
   setActiveTask: (taskId: number | null) => void;
+  canSwitchTask: () => boolean;
+  switchTask: (newTaskId: number | null) => void;
 }
 
 export const useTimerStore = create<TimerState>((set, get) => ({
@@ -215,5 +217,39 @@ export const useTimerStore = create<TimerState>((set, get) => ({
 
   setActiveTask: (taskId: number | null) => {
     set({ activeTaskId: taskId });
+  },
+
+  canSwitchTask: () => {
+    const { status, type } = get();
+    // Can switch task if timer is idle or not on a work session
+    return status === 'idle' || type !== 'work';
+  },
+
+  switchTask: (newTaskId: number | null) => {
+    const { status, type, timeLeft, totalTime, activeTaskId } = get();
+
+    // If switching to the same task, do nothing
+    if (activeTaskId === newTaskId) return;
+
+    // If timer is idle, just switch
+    if (status === 'idle') {
+      set({ activeTaskId: newTaskId });
+      return;
+    }
+
+    // If on a break, allow switching without resetting
+    if (type !== 'work') {
+      set({ activeTaskId: newTaskId });
+      return;
+    }
+
+    // If timer is running on a work session with a different task,
+    // pause and require manual confirmation
+    if (status === 'running' && timeLeft < totalTime) {
+      // This will be handled in the UI with a confirmation dialog
+      return;
+    }
+
+    set({ activeTaskId: newTaskId });
   },
 }));

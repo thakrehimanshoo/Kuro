@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { db, type Task, type TaskPriority } from '@/lib/db';
 import { useTimerStore } from '@/lib/store';
 import BottomNav from '@/components/BottomNav';
+import DatePicker from '@/components/DatePicker';
 import { format, isToday, isTomorrow, isPast, isThisWeek } from 'date-fns';
 
 type FilterType = 'all' | 'today' | 'upcoming' | 'overdue' | 'completed';
@@ -21,8 +22,10 @@ export default function TasksPage() {
   const [taskTags, setTaskTags] = useState<string>('');
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showTaskModal, setShowTaskModal] = useState(false);
+  const [showSwitchTaskModal, setShowSwitchTaskModal] = useState(false);
+  const [pendingTaskId, setPendingTaskId] = useState<number | null>(null);
 
-  const { setActiveTask } = useTimerStore();
+  const { setActiveTask, activeTaskId, canSwitchTask, abandon } = useTimerStore();
 
   const allTasks = useLiveQuery(() =>
     db.tasks.orderBy('createdAt').reverse().toArray()
@@ -162,10 +165,36 @@ export default function TasksPage() {
   };
 
   const handleStartPomodoro = (task: Task) => {
-    if (task.id) {
-      setActiveTask(task.id);
+    if (!task.id) return;
+
+    // If there's an active task and timer is running, ask for confirmation
+    if (activeTaskId && activeTaskId !== task.id && !canSwitchTask()) {
+      setPendingTaskId(task.id);
+      setShowSwitchTaskModal(true);
+      return;
+    }
+
+    // Otherwise, switch task and navigate to timer
+    setActiveTask(task.id);
+    router.push('/');
+  };
+
+  const handleConfirmSwitchTask = async () => {
+    if (pendingTaskId) {
+      // Abandon current session
+      await abandon();
+
+      // Switch to new task
+      setActiveTask(pendingTaskId);
       router.push('/');
     }
+    setShowSwitchTaskModal(false);
+    setPendingTaskId(null);
+  };
+
+  const handleCancelSwitchTask = () => {
+    setShowSwitchTaskModal(false);
+    setPendingTaskId(null);
   };
 
   const getPriorityColor = (priority: TaskPriority) => {
@@ -476,12 +505,11 @@ export default function TasksPage() {
                 High
               </button>
             </div>
-            <input
-              type="date"
+            <DatePicker
               value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-xs focus:outline-none focus:border-white/30"
+              onChange={setDueDate}
               placeholder="Due date"
+              className="w-32"
             />
           </div>
         </div>
@@ -575,11 +603,10 @@ export default function TasksPage() {
 
               <div>
                 <label className="block text-sm opacity-60 mb-2">Due Date</label>
-                <input
-                  type="date"
+                <DatePicker
                   value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white/30"
+                  onChange={setDueDate}
+                  placeholder="Select due date"
                 />
               </div>
 
@@ -615,6 +642,40 @@ export default function TasksPage() {
                 className="flex-1 px-4 py-3 bg-white text-black rounded-lg hover:scale-105 transition-transform disabled:opacity-30 disabled:hover:scale-100"
               >
                 Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Switch Task Confirmation Modal */}
+      {showSwitchTaskModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-6">
+          <div className="bg-black border border-white/20 rounded-2xl p-6 lg:p-8 w-full max-w-md">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center">
+                <svg className="w-8 h-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-extralight mb-3">Switch Task?</h2>
+              <p className="text-sm opacity-60">
+                You have an active Pomodoro session running. Switching tasks will abandon the current session.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancelSwitchTask}
+                className="flex-1 px-4 py-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmSwitchTask}
+                className="flex-1 px-4 py-3 bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 rounded-lg hover:bg-yellow-500/30 transition-colors"
+              >
+                Switch Task
               </button>
             </div>
           </div>
