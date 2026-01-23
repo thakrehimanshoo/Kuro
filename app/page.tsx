@@ -40,16 +40,34 @@ export default function TimerPage() {
   }, [status, tick]);
 
   useEffect(() => {
-    // Save completed session to database
+    // Save completed session to database and create calendar event
     const saveSession = async () => {
-      if (timeLeft === 0 && status === 'idle') {
-        await db.sessions.add({
+      if (timeLeft === 0 && status === 'idle' && type === 'work') {
+        const now = Date.now();
+        const sessionDuration = totalTime / 60;
+        const startTime = now - (sessionDuration * 60 * 1000);
+
+        // Save session
+        const sessionId = await db.sessions.add({
           type,
-          duration: totalTime / 60,
-          completedAt: Date.now(),
+          duration: sessionDuration,
+          completedAt: now,
           date: getTodayDate(),
           taskId: activeTaskId || undefined,
           abandoned: false,
+        });
+
+        // Create calendar event
+        await db.calendar.add({
+          title: activeTaskId ? `🎯 Focus Session` : 'Focus Session',
+          startDate: startTime,
+          endDate: now,
+          allDay: false,
+          type: 'session',
+          linkedId: sessionId as number,
+          color: '#51cf66',
+          createdAt: now,
+          updatedAt: now,
         });
       }
     };

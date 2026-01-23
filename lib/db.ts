@@ -9,6 +9,9 @@ export interface Task {
   priority: TaskPriority;
   createdAt: number;
   completedAt?: number;
+  dueDate?: number; // Timestamp
+  tags?: string[];
+  description?: string;
 }
 
 export interface PomodoroSession {
@@ -72,6 +75,20 @@ export interface Template {
   createdAt: number;
 }
 
+export interface CalendarEvent {
+  id?: number;
+  title: string;
+  description?: string;
+  startDate: number; // Timestamp
+  endDate: number; // Timestamp
+  allDay: boolean;
+  type: 'task' | 'session' | 'note' | 'custom'; // Link to different entities
+  linkedId?: number; // ID of linked task/session/note
+  color?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 const db = new Dexie('KuroDB') as Dexie & {
   tasks: EntityTable<Task, 'id'>;
   sessions: EntityTable<PomodoroSession, 'id'>;
@@ -80,6 +97,7 @@ const db = new Dexie('KuroDB') as Dexie & {
   notes: EntityTable<Note, 'id'>;
   tags: EntityTable<Tag, 'id'>;
   templates: EntityTable<Template, 'id'>;
+  calendar: EntityTable<CalendarEvent, 'id'>;
 };
 
 // Version 1: Initial schema
@@ -133,6 +151,47 @@ db.version(3).stores({
         isArchived: false,
         createdAt: entry.createdAt,
         updatedAt: entry.updatedAt,
+      });
+    }
+  }
+});
+
+// Version 4: Add calendar and enhance tasks
+db.version(4).stores({
+  tasks: '++id, completed, createdAt, priority, dueDate, *tags',
+  sessions: '++id, date, completedAt, type, taskId, abandoned',
+  settings: '++id',
+  notebooks: '++id, name, isDefault, createdAt, updatedAt',
+  notes: '++id, notebookId, title, *tags, isPinned, isFavorite, isArchived, createdAt, updatedAt, deletedAt',
+  tags: '++id, name, usageCount, createdAt',
+  templates: '++id, name, isSystem, createdAt',
+  calendar: '++id, type, linkedId, startDate, endDate, allDay, createdAt, updatedAt',
+}).upgrade(async (tx) => {
+  // Auto-create calendar events for existing tasks with due dates
+  const existingTasks = await tx.table('tasks').toArray();
+
+  for (const task of existingTasks) {
+    // Initialize new fields for existing tasks
+    if (!task.tags) {
+      await tx.table('tasks').update(task.id, { tags: [] });
+    }
+  }
+
+  // Auto-create calendar events for existing sessions
+  const existingSessions = await tx.table('sessions').toArray();
+
+  for (const session of existingSessions) {
+    if (session.type === 'work' && !session.abandoned) {
+      await tx.table('calendar').add({
+        title: session.taskId ? `Pomodoro Session` : 'Focus Session',
+        startDate: session.completedAt - (session.duration * 60 * 1000),
+        endDate: session.completedAt,
+        allDay: false,
+        type: 'session',
+        linkedId: session.id,
+        color: '#ffffff',
+        createdAt: session.completedAt,
+        updatedAt: session.completedAt,
       });
     }
   }
