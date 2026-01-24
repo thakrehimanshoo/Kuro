@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay, isToday, startOfMonth, endOfMonth, addMonths, subMonths, addDays, subDays } from 'date-fns';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type CalendarEvent } from '@/lib/db';
@@ -9,6 +9,9 @@ import DatePicker from '@/components/DatePicker';
 import TimePicker from '@/components/TimePicker';
 
 type ViewType = 'day' | 'week' | 'month';
+
+// Constants
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 export default function CalendarPage() {
   const [view, setView] = useState<ViewType>('week');
@@ -31,17 +34,24 @@ export default function CalendarPage() {
   const calendarEvents = useLiveQuery(() => db.calendar.toArray());
   const tasks = useLiveQuery(() => db.tasks.toArray());
 
-  // Week view dates
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
-  const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
-  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+  // Week view dates - memoized for performance
+  const weekDays = useMemo(() => {
+    const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
+    const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
+    return eachDayOfInterval({ start: weekStart, end: weekEnd });
+  }, [currentDate]);
 
-  // Month view for mini calendar
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  // Month view dates - memoized for performance
+  const { monthStart, monthDays } = useMemo(() => {
+    const start = startOfMonth(currentDate);
+    const end = endOfMonth(currentDate);
+    return {
+      monthStart: start,
+      monthDays: eachDayOfInterval({ start, end }),
+    };
+  }, [currentDate]);
 
-  // Get events for current view
+  // Get events for current view - optimized to filter by date range
   const visibleEvents = useMemo(() => {
     const events: Array<{
       id?: number;
@@ -53,39 +63,67 @@ export default function CalendarPage() {
       color: string;
     }> = [];
 
+    // Determine date range based on view
+    let rangeStart: Date;
+    let rangeEnd: Date;
+
+    if (view === 'day') {
+      rangeStart = new Date(currentDate);
+      rangeStart.setHours(0, 0, 0, 0);
+      rangeEnd = new Date(currentDate);
+      rangeEnd.setHours(23, 59, 59, 999);
+    } else if (view === 'week') {
+      rangeStart = startOfWeek(currentDate, { weekStartsOn: 0 });
+      rangeEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
+    } else {
+      rangeStart = startOfMonth(currentDate);
+      rangeEnd = endOfMonth(currentDate);
+    }
+
     if (calendarEvents) {
       calendarEvents.forEach((event) => {
-        events.push({
-          id: event.id,
-          title: event.title,
-          start: new Date(event.startDate),
-          end: new Date(event.endDate),
-          allDay: event.allDay,
-          type: event.type,
-          color: event.color || '#8ab4f8',
-        });
+        const eventStart = new Date(event.startDate);
+        const eventEnd = new Date(event.endDate);
+
+        // Only include events that overlap with the current view
+        if (eventEnd >= rangeStart && eventStart <= rangeEnd) {
+          events.push({
+            id: event.id,
+            title: event.title,
+            start: eventStart,
+            end: eventEnd,
+            allDay: event.allDay,
+            type: event.type,
+            color: event.color || '#8ab4f8',
+          });
+        }
       });
     }
 
     if (tasks) {
       tasks.forEach((task) => {
         if (task.dueDate && !task.completed) {
-          events.push({
-            title: task.title,
-            start: new Date(task.dueDate),
-            end: new Date(task.dueDate),
-            allDay: true,
-            type: 'task',
-            color: '#ff6b6b',
-          });
+          const taskDate = new Date(task.dueDate);
+
+          // Only include tasks that fall within the current view
+          if (taskDate >= rangeStart && taskDate <= rangeEnd) {
+            events.push({
+              title: task.title,
+              start: taskDate,
+              end: taskDate,
+              allDay: true,
+              type: 'task',
+              color: '#ff6b6b',
+            });
+          }
         }
       });
     }
 
     return events;
-  }, [calendarEvents, tasks]);
+  }, [calendarEvents, tasks, currentDate, view]);
 
-  const handleCreateEvent = () => {
+  const handleCreateEvent = useCallback(() => {
     setSelectedEvent(null);
     setNewEventTitle('');
     setNewEventDate(format(new Date(), 'yyyy-MM-dd'));
@@ -93,9 +131,9 @@ export default function CalendarPage() {
     setNewEventEndTime('10:00');
     setIsAllDay(false);
     setShowEventModal(true);
-  };
+  }, []);
 
-  const handleSaveEvent = async () => {
+  const handleSaveEvent = useCallback(async () => {
     if (!newEventTitle.trim() || !newEventDate) return;
 
     const startDate = isAllDay
@@ -105,6 +143,12 @@ export default function CalendarPage() {
     const endDate = isAllDay
       ? new Date(newEventDate).getTime()
       : new Date(`${newEventDate}T${newEventEndTime}`).getTime();
+
+    // Validate that end time is after start time
+    if (!isAllDay && endDate <= startDate) {
+      alert('End time must be after start time');
+      return;
+    }
 
     if (selectedEvent?.id) {
       // Update
@@ -130,15 +174,15 @@ export default function CalendarPage() {
     }
 
     setShowEventModal(false);
-  };
+  }, [newEventTitle, newEventDate, newEventStartTime, newEventEndTime, isAllDay, selectedEvent]);
 
-  const handleDeleteEvent = async () => {
+  const handleDeleteEvent = useCallback(async () => {
     if (selectedEvent?.id) {
       await db.calendar.delete(selectedEvent.id);
       setShowEventModal(false);
       setSelectedEvent(null);
     }
-  };
+  }, [selectedEvent]);
 
   const getEventsForDay = (day: Date) => {
     return visibleEvents.filter(event =>
@@ -146,8 +190,8 @@ export default function CalendarPage() {
     );
   };
 
-  // Drag handlers
-  const handleDragStart = (event: CalendarEvent, type: 'move' | 'resize-top' | 'resize-bottom', e: React.MouseEvent) => {
+  // Drag handlers - memoized for performance
+  const handleDragStart = useCallback((event: CalendarEvent, type: 'move' | 'resize-top' | 'resize-bottom', e: React.MouseEvent) => {
     e.stopPropagation();
     if (event.type !== 'custom') return; // Only allow dragging custom events
 
@@ -155,9 +199,9 @@ export default function CalendarPage() {
     setIsDragging(true);
     setDragType(type);
     setDragStartY(e.clientY);
-  };
+  }, []);
 
-  const handleDragMove = (e: React.MouseEvent) => {
+  const handleDragMove = useCallback((e: React.MouseEvent) => {
     if (!isDragging || !draggedEvent || !dragType) return;
 
     e.preventDefault();
@@ -186,16 +230,21 @@ export default function CalendarPage() {
       endDate: endDate.getTime(),
       updatedAt: Date.now(),
     });
-  };
+  }, [isDragging, draggedEvent, dragType, dragStartY]);
 
-  const handleDragEnd = () => {
+  const handleDragEnd = useCallback(() => {
     setIsDragging(false);
     setDraggedEvent(null);
     setDragType(null);
     setDragStartY(0);
-  };
+  }, []);
 
-  const hours = Array.from({ length: 24 }, (_, i) => i);
+  // Memoize getEventsForDay for performance
+  const getEventsForDay = useCallback((day: Date) => {
+    return visibleEvents.filter(event =>
+      isSameDay(new Date(event.start), day)
+    );
+  }, [visibleEvents]);
 
   return (
     <div className="flex flex-col h-screen bg-[#1a1a1a] text-white lg:ml-64">
@@ -295,7 +344,7 @@ export default function CalendarPage() {
               <div className="h-16 lg:h-20 flex items-center justify-center border-b border-white/10">
                 <div className="text-xs lg:text-sm font-medium">{format(currentDate, 'EEE d')}</div>
               </div>
-              {hours.map(hour => (
+              {HOURS.map(hour => (
                 <div key={hour} className="h-12 lg:h-16 text-xs lg:text-sm opacity-40 pr-1 lg:pr-3 text-right pt-1">
                   {hour === 0 ? '12a' : hour < 12 ? `${hour}a` : hour === 12 ? '12p' : `${hour - 12}p`}
                 </div>
@@ -323,7 +372,7 @@ export default function CalendarPage() {
                   onMouseUp={handleDragEnd}
                   onMouseLeave={handleDragEnd}
                 >
-                  {hours.map(hour => (
+                  {HOURS.map(hour => (
                     <div
                       key={hour}
                       className="h-12 lg:h-16 border-b border-white/5 hover:bg-white/[0.02] cursor-pointer transition-colors"
@@ -452,7 +501,7 @@ export default function CalendarPage() {
             {/* Time column */}
             <div className="w-10 lg:w-16 flex-shrink-0 border-r border-white/10">
               <div className="h-12 lg:h-16" /> {/* Spacer for header */}
-              {hours.map(hour => (
+              {HOURS.map(hour => (
                 <div key={hour} className="h-12 lg:h-16 text-[10px] lg:text-xs opacity-40 pr-1 lg:pr-2 text-right pt-1">
                   {hour === 0 ? '12a' : hour < 12 ? `${hour}a` : hour === 12 ? '12p' : `${hour - 12}p`}
                 </div>
@@ -487,7 +536,7 @@ export default function CalendarPage() {
                         onMouseUp={handleDragEnd}
                         onMouseLeave={handleDragEnd}
                       >
-                        {hours.map(hour => (
+                        {HOURS.map(hour => (
                           <div
                             key={hour}
                             className="h-12 lg:h-16 border-b border-white/5 hover:bg-white/[0.02] cursor-pointer"
