@@ -56,6 +56,96 @@ export default function TimePicker({ value, onChange, label }: TimePickerProps) 
   const hours = Array.from({ length: 12 }, (_, i) => i + 1);
   const minutes = ['00', '15', '30', '45'];
 
+  const renderPickerContent = () => (
+    <>
+      <div className="flex gap-3 mb-4">
+        {/* Hours */}
+        <div className="flex-1">
+          <div className="text-xs opacity-60 mb-2">Hour</div>
+          <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+            {hours.map((h) => (
+              <button
+                key={h}
+                type="button"
+                onClick={() => {
+                  let newHour = h;
+                  if (period === 'PM' && h < 12) newHour += 12;
+                  if (period === 'AM' && h === 12) newHour = 0;
+                  setHour(newHour.toString().padStart(2, '0'));
+                }}
+                className={`py-2 rounded-lg text-sm transition-all ${
+                  displayHour() === h.toString()
+                    ? 'bg-[#8ab4f8] text-[#202124] font-medium'
+                    : 'hover:bg-white/10'
+                }`}
+              >
+                {h}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Minutes */}
+        <div className="flex-1">
+          <div className="text-xs opacity-60 mb-2">Minute</div>
+          <div className="grid grid-cols-2 gap-2">
+            {minutes.map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMinute(m)}
+                className={`py-2 rounded-lg text-sm transition-all ${
+                  minute === m
+                    ? 'bg-[#8ab4f8] text-[#202124] font-medium'
+                    : 'hover:bg-white/10'
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* AM/PM */}
+        <div className="flex-shrink-0">
+          <div className="text-xs opacity-60 mb-2">Period</div>
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => setPeriod('AM')}
+              className={`px-3 py-2 rounded-lg text-sm transition-all ${
+                period === 'AM'
+                  ? 'bg-[#8ab4f8] text-[#202124] font-medium'
+                  : 'hover:bg-white/10'
+              }`}
+            >
+              AM
+            </button>
+            <button
+              type="button"
+              onClick={() => setPeriod('PM')}
+              className={`px-3 py-2 rounded-lg text-sm transition-all ${
+                period === 'PM'
+                  ? 'bg-[#8ab4f8] text-[#202124] font-medium'
+                  : 'hover:bg-white/10'
+              }`}
+            >
+              PM
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={handleSave}
+        className="w-full py-2 bg-[#8ab4f8] text-[#202124] rounded-lg font-medium hover:bg-[#aecbfa] transition-all"
+      >
+        Done
+      </button>
+    </>
+  );
+
   return (
     <div ref={ref} className="relative">
       {label && <label className="block text-sm opacity-60 mb-2">{label}</label>}
@@ -72,93 +162,19 @@ export default function TimePicker({ value, onChange, label }: TimePickerProps) 
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-[#202124] border border-white/10 rounded-xl p-4 z-[100] shadow-2xl w-[280px]">
-          <div className="flex gap-3 mb-4">
-            {/* Hours */}
-            <div className="flex-1">
-              <div className="text-xs opacity-60 mb-2">Hour</div>
-              <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
-                {hours.map((h) => (
-                  <button
-                    key={h}
-                    type="button"
-                    onClick={() => {
-                      let newHour = h;
-                      if (period === 'PM' && h < 12) newHour += 12;
-                      if (period === 'AM' && h === 12) newHour = 0;
-                      setHour(newHour.toString().padStart(2, '0'));
-                    }}
-                    className={`py-2 rounded-lg text-sm transition-all ${
-                      displayHour() === h.toString()
-                        ? 'bg-[#8ab4f8] text-[#202124] font-medium'
-                        : 'hover:bg-white/10'
-                    }`}
-                  >
-                    {h}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Minutes */}
-            <div className="flex-1">
-              <div className="text-xs opacity-60 mb-2">Minute</div>
-              <div className="grid grid-cols-2 gap-2">
-                {minutes.map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setMinute(m)}
-                    className={`py-2 rounded-lg text-sm transition-all ${
-                      minute === m
-                        ? 'bg-[#8ab4f8] text-[#202124] font-medium'
-                        : 'hover:bg-white/10'
-                    }`}
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* AM/PM */}
-            <div className="flex-shrink-0">
-              <div className="text-xs opacity-60 mb-2">Period</div>
-              <div className="flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPeriod('AM')}
-                  className={`px-3 py-2 rounded-lg text-sm transition-all ${
-                    period === 'AM'
-                      ? 'bg-[#8ab4f8] text-[#202124] font-medium'
-                      : 'hover:bg-white/10'
-                  }`}
-                >
-                  AM
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPeriod('PM')}
-                  className={`px-3 py-2 rounded-lg text-sm transition-all ${
-                    period === 'PM'
-                      ? 'bg-[#8ab4f8] text-[#202124] font-medium'
-                      : 'hover:bg-white/10'
-                  }`}
-                >
-                  PM
-                </button>
-              </div>
+        <>
+          {/* Mobile: Fixed overlay */}
+          <div className="lg:hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+            <div className="bg-[#202124] border border-white/10 rounded-xl p-4 shadow-2xl w-full max-w-[280px]">
+              {renderPickerContent()}
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleSave}
-            className="w-full py-2 bg-[#8ab4f8] text-[#202124] rounded-lg font-medium hover:bg-[#aecbfa] transition-all"
-          >
-            Done
-          </button>
-        </div>
+          {/* Desktop: Dropdown below input */}
+          <div className="hidden lg:block absolute top-full left-0 mt-2 bg-[#202124] border border-white/10 rounded-xl p-4 z-[100] shadow-2xl w-[280px]">
+            {renderPickerContent()}
+          </div>
+        </>
       )}
     </div>
   );
