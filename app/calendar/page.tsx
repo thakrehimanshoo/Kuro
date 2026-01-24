@@ -21,6 +21,12 @@ export default function CalendarPage() {
   const [newEventEndTime, setNewEventEndTime] = useState('10:00');
   const [isAllDay, setIsAllDay] = useState(false);
 
+  // Drag state
+  const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartY, setDragStartY] = useState(0);
+  const [dragType, setDragType] = useState<'move' | 'resize-top' | 'resize-bottom' | null>(null);
+
   // Get all calendar events
   const calendarEvents = useLiveQuery(() => db.calendar.toArray());
   const tasks = useLiveQuery(() => db.tasks.toArray());
@@ -140,6 +146,55 @@ export default function CalendarPage() {
     );
   };
 
+  // Drag handlers
+  const handleDragStart = (event: CalendarEvent, type: 'move' | 'resize-top' | 'resize-bottom', e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (event.type !== 'custom') return; // Only allow dragging custom events
+
+    setDraggedEvent(event);
+    setIsDragging(true);
+    setDragType(type);
+    setDragStartY(e.clientY);
+  };
+
+  const handleDragMove = (e: React.MouseEvent) => {
+    if (!isDragging || !draggedEvent || !dragType) return;
+
+    e.preventDefault();
+    const deltaY = e.clientY - dragStartY;
+    const deltaMinutes = Math.round(deltaY / 64 * 60); // 64px per hour
+
+    if (Math.abs(deltaMinutes) < 15) return; // Snap to 15-minute intervals
+
+    const startDate = new Date(draggedEvent.startDate);
+    const endDate = new Date(draggedEvent.endDate);
+
+    if (dragType === 'move') {
+      startDate.setMinutes(startDate.getMinutes() + deltaMinutes);
+      endDate.setMinutes(endDate.getMinutes() + deltaMinutes);
+    } else if (dragType === 'resize-top') {
+      startDate.setMinutes(startDate.getMinutes() + deltaMinutes);
+      if (startDate >= endDate) return; // Prevent invalid times
+    } else if (dragType === 'resize-bottom') {
+      endDate.setMinutes(endDate.getMinutes() + deltaMinutes);
+      if (endDate <= startDate) return; // Prevent invalid times
+    }
+
+    setDragStartY(e.clientY);
+    db.calendar.update(draggedEvent.id!, {
+      startDate: startDate.getTime(),
+      endDate: endDate.getTime(),
+      updatedAt: Date.now(),
+    });
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    setDraggedEvent(null);
+    setDragType(null);
+    setDragStartY(0);
+  };
+
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
   return (
@@ -251,16 +306,23 @@ export default function CalendarPage() {
                 </div>
 
                 {/* Time slots */}
-                <div className="relative">
+                <div
+                  className="relative"
+                  onMouseMove={handleDragMove}
+                  onMouseUp={handleDragEnd}
+                  onMouseLeave={handleDragEnd}
+                >
                   {hours.map(hour => (
                     <div
                       key={hour}
                       className="h-16 border-b border-white/5 hover:bg-white/[0.02] cursor-pointer transition-colors"
                       onClick={() => {
-                        setNewEventDate(format(currentDate, 'yyyy-MM-dd'));
-                        setNewEventStartTime(`${hour.toString().padStart(2, '0')}:00`);
-                        setNewEventEndTime(`${(hour + 1).toString().padStart(2, '0')}:00`);
-                        handleCreateEvent();
+                        if (!isDragging) {
+                          setNewEventDate(format(currentDate, 'yyyy-MM-dd'));
+                          setNewEventStartTime(`${hour.toString().padStart(2, '0')}:00`);
+                          setNewEventEndTime(`${(hour + 1).toString().padStart(2, '0')}:00`);
+                          handleCreateEvent();
+                        }
                       }}
                     />
                   ))}
@@ -303,34 +365,69 @@ export default function CalendarPage() {
                     const top = startHour * 64 + (startMinute / 60) * 64;
                     const height = (duration / 60) * 64;
 
+                    const fullEvent = event.id ? calendarEvents?.find(e => e.id === event.id) : null;
+                    const isDraggable = fullEvent && event.type === 'custom';
+
                     return (
                       <div
                         key={i}
-                        className="absolute left-2 right-2 px-3 py-2 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                        className={`absolute left-2 right-2 rounded-lg transition-opacity group ${
+                          isDraggable ? 'cursor-move' : 'cursor-pointer'
+                        } ${isDragging && draggedEvent?.id === event.id ? 'opacity-60' : 'hover:opacity-90'}`}
                         style={{
                           backgroundColor: event.color + '90',
                           top: `${top}px`,
                           height: `${Math.max(height, 40)}px`,
                         }}
-                        onClick={() => {
-                          if (event.id) {
-                            const fullEvent = calendarEvents?.find(e => e.id === event.id);
-                            if (fullEvent) {
-                              setSelectedEvent(fullEvent);
-                              setNewEventTitle(fullEvent.title);
-                              setNewEventDate(format(new Date(fullEvent.startDate), 'yyyy-MM-dd'));
-                              setNewEventStartTime(format(new Date(fullEvent.startDate), 'HH:mm'));
-                              setNewEventEndTime(format(new Date(fullEvent.endDate), 'HH:mm'));
-                              setIsAllDay(fullEvent.allDay);
-                              setShowEventModal(true);
-                            }
+                        onMouseDown={(e) => {
+                          if (isDraggable && fullEvent) {
+                            handleDragStart(fullEvent, 'move', e);
+                          }
+                        }}
+                        onClick={(e) => {
+                          if (!isDragging && event.id && fullEvent) {
+                            setSelectedEvent(fullEvent);
+                            setNewEventTitle(fullEvent.title);
+                            setNewEventDate(format(new Date(fullEvent.startDate), 'yyyy-MM-dd'));
+                            setNewEventStartTime(format(new Date(fullEvent.startDate), 'HH:mm'));
+                            setNewEventEndTime(format(new Date(fullEvent.endDate), 'HH:mm'));
+                            setIsAllDay(fullEvent.allDay);
+                            setShowEventModal(true);
                           }
                         }}
                       >
-                        <div className="font-medium text-sm truncate">{event.title}</div>
-                        <div className="text-xs opacity-90 mt-0.5">
-                          {format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}
+                        {/* Resize handle - top */}
+                        {isDraggable && height >= 64 && (
+                          <div
+                            className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              if (fullEvent) handleDragStart(fullEvent, 'resize-top', e);
+                            }}
+                          >
+                            <div className="h-1 bg-white/30 rounded-t-lg" />
+                          </div>
+                        )}
+
+                        <div className="px-3 py-2">
+                          <div className="font-medium text-sm truncate">{event.title}</div>
+                          <div className="text-xs opacity-90 mt-0.5">
+                            {format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}
+                          </div>
                         </div>
+
+                        {/* Resize handle - bottom */}
+                        {isDraggable && height >= 64 && (
+                          <div
+                            className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              if (fullEvent) handleDragStart(fullEvent, 'resize-bottom', e);
+                            }}
+                          >
+                            <div className="h-1 bg-white/30 rounded-b-lg" />
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -373,16 +470,23 @@ export default function CalendarPage() {
                       </div>
 
                       {/* Time slots */}
-                      <div className="relative">
+                      <div
+                        className="relative"
+                        onMouseMove={handleDragMove}
+                        onMouseUp={handleDragEnd}
+                        onMouseLeave={handleDragEnd}
+                      >
                         {hours.map(hour => (
                           <div
                             key={hour}
                             className="h-16 border-b border-white/5 hover:bg-white/[0.02] cursor-pointer"
                             onClick={() => {
-                              setNewEventDate(format(day, 'yyyy-MM-dd'));
-                              setNewEventStartTime(`${hour.toString().padStart(2, '0')}:00`);
-                              setNewEventEndTime(`${(hour + 1).toString().padStart(2, '0')}:00`);
-                              handleCreateEvent();
+                              if (!isDragging) {
+                                setNewEventDate(format(day, 'yyyy-MM-dd'));
+                                setNewEventStartTime(`${hour.toString().padStart(2, '0')}:00`);
+                                setNewEventEndTime(`${(hour + 1).toString().padStart(2, '0')}:00`);
+                                handleCreateEvent();
+                              }
                             }}
                           />
                         ))}
@@ -407,34 +511,69 @@ export default function CalendarPage() {
                           const top = startHour * 64 + (startMinute / 60) * 64;
                           const height = (duration / 60) * 64;
 
+                          const fullEvent = event.id ? calendarEvents?.find(e => e.id === event.id) : null;
+                          const isDraggable = fullEvent && event.type === 'custom';
+
                           return (
                             <div
                               key={i}
-                              className="absolute left-1 right-1 px-2 py-1 rounded text-xs cursor-pointer hover:opacity-90"
+                              className={`absolute left-1 right-1 rounded text-xs transition-opacity group ${
+                                isDraggable ? 'cursor-move' : 'cursor-pointer'
+                              } ${isDragging && draggedEvent?.id === event.id ? 'opacity-60' : 'hover:opacity-90'}`}
                               style={{
                                 backgroundColor: event.color + '80',
                                 top: `${top}px`,
                                 height: `${Math.max(height, 32)}px`,
                               }}
+                              onMouseDown={(e) => {
+                                if (isDraggable && fullEvent) {
+                                  handleDragStart(fullEvent, 'move', e);
+                                }
+                              }}
                               onClick={() => {
-                                if (event.id) {
-                                  const fullEvent = calendarEvents?.find(e => e.id === event.id);
-                                  if (fullEvent) {
-                                    setSelectedEvent(fullEvent);
-                                    setNewEventTitle(fullEvent.title);
-                                    setNewEventDate(format(new Date(fullEvent.startDate), 'yyyy-MM-dd'));
-                                    setNewEventStartTime(format(new Date(fullEvent.startDate), 'HH:mm'));
-                                    setNewEventEndTime(format(new Date(fullEvent.endDate), 'HH:mm'));
-                                    setIsAllDay(fullEvent.allDay);
-                                    setShowEventModal(true);
-                                  }
+                                if (!isDragging && event.id && fullEvent) {
+                                  setSelectedEvent(fullEvent);
+                                  setNewEventTitle(fullEvent.title);
+                                  setNewEventDate(format(new Date(fullEvent.startDate), 'yyyy-MM-dd'));
+                                  setNewEventStartTime(format(new Date(fullEvent.startDate), 'HH:mm'));
+                                  setNewEventEndTime(format(new Date(fullEvent.endDate), 'HH:mm'));
+                                  setIsAllDay(fullEvent.allDay);
+                                  setShowEventModal(true);
                                 }
                               }}
                             >
-                              <div className="font-medium truncate">{event.title}</div>
-                              <div className="text-xs opacity-80">
-                                {format(event.start, 'h:mm a')}
+                              {/* Resize handle - top */}
+                              {isDraggable && height >= 48 && (
+                                <div
+                                  className="absolute top-0 left-0 right-0 h-1.5 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onMouseDown={(e) => {
+                                    e.stopPropagation();
+                                    if (fullEvent) handleDragStart(fullEvent, 'resize-top', e);
+                                  }}
+                                >
+                                  <div className="h-0.5 bg-white/30 rounded-t" />
+                                </div>
+                              )}
+
+                              <div className="px-2 py-1">
+                                <div className="font-medium truncate">{event.title}</div>
+                                <div className="text-xs opacity-80">
+                                  {format(event.start, 'h:mm a')}
+                                </div>
                               </div>
+
+                              {/* Resize handle - bottom */}
+                              {isDraggable && height >= 48 && (
+                                <div
+                                  className="absolute bottom-0 left-0 right-0 h-1.5 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onMouseDown={(e) => {
+                                    e.stopPropagation();
+                                    if (fullEvent) handleDragStart(fullEvent, 'resize-bottom', e);
+                                  }}
+                                >
+                                  <div className="h-0.5 bg-white/30 rounded-b" />
+                                </div>
+                              )}
                             </div>
                           );
                         })}
