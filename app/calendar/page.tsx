@@ -200,77 +200,88 @@ export default function CalendarPage() {
   return (
     <div className="flex flex-col h-screen bg-[#1a1a1a] text-white lg:ml-64">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 lg:px-8 py-4 border-b border-white/10">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setCurrentDate(new Date())}
-            className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm transition-all"
-          >
-            Today
-          </button>
+      <div className="border-b border-white/10">
+        {/* Top row - Mobile optimized */}
+        <div className="flex items-center justify-between px-4 lg:px-8 py-3 lg:py-4">
+          <div className="flex items-center gap-2 lg:gap-4">
+            <button
+              onClick={() => setCurrentDate(new Date())}
+              className="px-3 lg:px-4 py-1.5 lg:py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs lg:text-sm transition-all"
+            >
+              Today
+            </button>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                if (view === 'day') setCurrentDate(subDays(currentDate, 1));
-                else if (view === 'week') setCurrentDate(subWeeks(currentDate, 1));
-                else setCurrentDate(subMonths(currentDate, 1));
-              }}
-              className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-full transition-all"
-            >
-              ‹
-            </button>
-            <button
-              onClick={() => {
-                if (view === 'day') setCurrentDate(addDays(currentDate, 1));
-                else if (view === 'week') setCurrentDate(addWeeks(currentDate, 1));
-                else setCurrentDate(addMonths(currentDate, 1));
-              }}
-              className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-full transition-all"
-            >
-              ›
-            </button>
-          </div>
-
-          <h1 className="text-xl font-normal">
-            {view === 'day' ? format(currentDate, 'EEEE, MMMM d, yyyy') : format(currentDate, 'MMMM yyyy')}
-          </h1>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="hidden lg:flex items-center gap-2 bg-white/5 rounded-lg p-1">
-            <button
-              onClick={() => setView('day')}
-              className={`px-3 py-1.5 rounded text-sm transition-all ${
-                view === 'day' ? 'bg-white/10' : 'hover:bg-white/5'
-              }`}
-            >
-              Day
-            </button>
-            <button
-              onClick={() => setView('week')}
-              className={`px-3 py-1.5 rounded text-sm transition-all ${
-                view === 'week' ? 'bg-white/10' : 'hover:bg-white/5'
-              }`}
-            >
-              Week
-            </button>
-            <button
-              onClick={() => setView('month')}
-              className={`px-3 py-1.5 rounded text-sm transition-all ${
-                view === 'month' ? 'bg-white/10' : 'hover:bg-white/5'
-              }`}
-            >
-              Month
-            </button>
+            <div className="flex items-center gap-1 lg:gap-2">
+              <button
+                onClick={() => {
+                  if (view === 'day') setCurrentDate(subDays(currentDate, 1));
+                  else if (view === 'week') setCurrentDate(subWeeks(currentDate, 1));
+                  else setCurrentDate(subMonths(currentDate, 1));
+                }}
+                className="w-8 h-8 lg:w-9 lg:h-9 flex items-center justify-center hover:bg-white/10 rounded-full transition-all text-lg lg:text-xl"
+              >
+                ‹
+              </button>
+              <button
+                onClick={() => {
+                  if (view === 'day') setCurrentDate(addDays(currentDate, 1));
+                  else if (view === 'week') setCurrentDate(addWeeks(currentDate, 1));
+                  else setCurrentDate(addMonths(currentDate, 1));
+                }}
+                className="w-8 h-8 lg:w-9 lg:h-9 flex items-center justify-center hover:bg-white/10 rounded-full transition-all text-lg lg:text-xl"
+              >
+                ›
+              </button>
+            </div>
           </div>
 
           <button
             onClick={handleCreateEvent}
-            className="px-4 py-2 bg-[#8ab4f8] text-[#202124] rounded-lg text-sm font-medium hover:bg-[#aecbfa] transition-all"
+            className="px-3 lg:px-4 py-1.5 lg:py-2 bg-[#8ab4f8] text-[#202124] rounded-lg text-xs lg:text-sm font-medium hover:bg-[#aecbfa] transition-all flex items-center gap-1"
           >
-            + Create
+            <span className="text-base lg:text-lg leading-none">+</span>
+            <span className="hidden sm:inline">Create</span>
           </button>
+        </div>
+
+        {/* Second row - Title and view switcher */}
+        <div className="flex items-center justify-between px-4 lg:px-8 pb-3 lg:pb-4">
+          <h1 className="text-base lg:text-xl font-normal truncate">
+            {view === 'day'
+              ? format(currentDate, 'EEEE, MMM d, yyyy')
+              : format(currentDate, 'MMMM yyyy')}
+          </h1>
+
+          {/* View switcher - visible on all screen sizes */}
+          <div className="flex items-center gap-1 lg:gap-2 bg-white/5 rounded-lg p-0.5 lg:p-1">
+            <button
+              onClick={() => setView('day')}
+              className={`px-2 lg:px-3 py-1 lg:py-1.5 rounded text-xs lg:text-sm transition-all ${
+                view === 'day' ? 'bg-white/10' : 'hover:bg-white/5'
+              }`}
+            >
+              <span className="hidden sm:inline">Day</span>
+              <span className="sm:hidden">D</span>
+            </button>
+            <button
+              onClick={() => setView('week')}
+              className={`px-2 lg:px-3 py-1 lg:py-1.5 rounded text-xs lg:text-sm transition-all ${
+                view === 'week' ? 'bg-white/10' : 'hover:bg-white/5'
+              }`}
+            >
+              <span className="hidden sm:inline">Week</span>
+              <span className="sm:hidden">W</span>
+            </button>
+            <button
+              onClick={() => setView('month')}
+              className={`px-2 lg:px-3 py-1 lg:py-1.5 rounded text-xs lg:text-sm transition-all ${
+                view === 'month' ? 'bg-white/10' : 'hover:bg-white/5'
+              }`}
+            >
+              <span className="hidden sm:inline">Month</span>
+              <span className="sm:hidden">M</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -280,13 +291,13 @@ export default function CalendarPage() {
           // Day View
           <div className="flex h-full">
             {/* Time column */}
-            <div className="w-20 flex-shrink-0 border-r border-white/10">
-              <div className="h-20 flex items-center justify-center border-b border-white/10">
-                <div className="text-sm font-medium">{format(currentDate, 'EEE d')}</div>
+            <div className="w-12 lg:w-20 flex-shrink-0 border-r border-white/10">
+              <div className="h-16 lg:h-20 flex items-center justify-center border-b border-white/10">
+                <div className="text-xs lg:text-sm font-medium">{format(currentDate, 'EEE d')}</div>
               </div>
               {hours.map(hour => (
-                <div key={hour} className="h-16 text-sm opacity-40 pr-3 text-right pt-1">
-                  {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                <div key={hour} className="h-12 lg:h-16 text-xs lg:text-sm opacity-40 pr-1 lg:pr-3 text-right pt-1">
+                  {hour === 0 ? '12a' : hour < 12 ? `${hour}a` : hour === 12 ? '12p' : `${hour - 12}p`}
                 </div>
               ))}
             </div>
@@ -295,10 +306,10 @@ export default function CalendarPage() {
             <div className="flex-1 overflow-y-auto">
               <div className="min-w-full">
                 {/* Day header with current time indicator */}
-                <div className={`h-20 flex items-center justify-center border-b border-white/10 ${
+                <div className={`h-16 lg:h-20 flex items-center justify-center border-b border-white/10 ${
                   isToday(currentDate) ? 'bg-[#8ab4f8]/10' : ''
                 }`}>
-                  <div className={`w-14 h-14 flex items-center justify-center rounded-full text-2xl ${
+                  <div className={`w-10 h-10 lg:w-14 lg:h-14 flex items-center justify-center rounded-full text-xl lg:text-2xl ${
                     isToday(currentDate) ? 'bg-[#8ab4f8] text-[#202124] font-medium' : 'text-white/60'
                   }`}>
                     {format(currentDate, 'd')}
@@ -315,7 +326,7 @@ export default function CalendarPage() {
                   {hours.map(hour => (
                     <div
                       key={hour}
-                      className="h-16 border-b border-white/5 hover:bg-white/[0.02] cursor-pointer transition-colors"
+                      className="h-12 lg:h-16 border-b border-white/5 hover:bg-white/[0.02] cursor-pointer transition-colors"
                       onClick={() => {
                         if (!isDragging) {
                           setNewEventDate(format(currentDate, 'yyyy-MM-dd'));
@@ -439,30 +450,30 @@ export default function CalendarPage() {
           // Week View
           <div className="flex h-full">
             {/* Time column */}
-            <div className="w-16 flex-shrink-0 border-r border-white/10">
-              <div className="h-16" /> {/* Spacer for header */}
+            <div className="w-10 lg:w-16 flex-shrink-0 border-r border-white/10">
+              <div className="h-12 lg:h-16" /> {/* Spacer for header */}
               {hours.map(hour => (
-                <div key={hour} className="h-16 text-xs opacity-40 pr-2 text-right pt-1">
-                  {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                <div key={hour} className="h-12 lg:h-16 text-[10px] lg:text-xs opacity-40 pr-1 lg:pr-2 text-right pt-1">
+                  {hour === 0 ? '12a' : hour < 12 ? `${hour}a` : hour === 12 ? '12p' : `${hour - 12}p`}
                 </div>
               ))}
             </div>
 
             {/* Days columns */}
             <div className="flex-1 overflow-x-auto">
-              <div className="flex min-w-[640px]">
+              <div className="flex min-w-full lg:min-w-[640px]">
                 {weekDays.map(day => {
                   const dayEvents = getEventsForDay(day);
                   const isTodayDate = isToday(day);
 
                   return (
-                    <div key={day.toString()} className="flex-1 border-r border-white/10">
+                    <div key={day.toString()} className="flex-1 border-r border-white/10 min-w-[80px] lg:min-w-0">
                       {/* Day header */}
-                      <div className={`h-16 flex flex-col items-center justify-center border-b border-white/10 ${
+                      <div className={`h-12 lg:h-16 flex flex-col items-center justify-center border-b border-white/10 ${
                         isTodayDate ? 'bg-[#8ab4f8]/10' : ''
                       }`}>
-                        <div className="text-xs opacity-60">{format(day, 'EEE')}</div>
-                        <div className={`w-10 h-10 flex items-center justify-center rounded-full ${
+                        <div className="text-[10px] lg:text-xs opacity-60">{format(day, 'EEE')}</div>
+                        <div className={`w-7 h-7 lg:w-10 lg:h-10 flex items-center justify-center rounded-full text-xs lg:text-base ${
                           isTodayDate ? 'bg-[#8ab4f8] text-[#202124] font-medium' : ''
                         }`}>
                           {format(day, 'd')}
@@ -479,7 +490,7 @@ export default function CalendarPage() {
                         {hours.map(hour => (
                           <div
                             key={hour}
-                            className="h-16 border-b border-white/5 hover:bg-white/[0.02] cursor-pointer"
+                            className="h-12 lg:h-16 border-b border-white/5 hover:bg-white/[0.02] cursor-pointer"
                             onClick={() => {
                               if (!isDragging) {
                                 setNewEventDate(format(day, 'yyyy-MM-dd'));
@@ -555,11 +566,13 @@ export default function CalendarPage() {
                                 </div>
                               )}
 
-                              <div className="px-2 py-1">
-                                <div className="font-medium truncate">{event.title}</div>
-                                <div className="text-xs opacity-80">
-                                  {format(event.start, 'h:mm a')}
-                                </div>
+                              <div className="px-1 lg:px-2 py-0.5 lg:py-1">
+                                <div className="font-medium truncate text-[10px] lg:text-xs">{event.title}</div>
+                                {height >= 40 && (
+                                  <div className="text-[9px] lg:text-xs opacity-80">
+                                    {format(event.start, 'h:mm a')}
+                                  </div>
+                                )}
                               </div>
 
                               {/* Resize handle - bottom */}
@@ -586,19 +599,20 @@ export default function CalendarPage() {
           </div>
         ) : (
           // Month View
-          <div className="p-4 lg:p-8">
+          <div className="p-2 lg:p-8">
             <div className="max-w-7xl mx-auto">
               {/* Day headers */}
-              <div className="grid grid-cols-7 gap-2 mb-2">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                  <div key={day} className="text-center text-sm opacity-60 font-medium py-2">
-                    {day}
+              <div className="grid grid-cols-7 gap-1 lg:gap-2 mb-1 lg:mb-2">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => (
+                  <div key={day} className="text-center text-[10px] lg:text-sm opacity-60 font-medium py-1 lg:py-2">
+                    <span className="hidden sm:inline">{day}</span>
+                    <span className="sm:hidden">{day[0]}</span>
                   </div>
                 ))}
               </div>
 
               {/* Days grid */}
-              <div className="grid grid-cols-7 gap-2">
+              <div className="grid grid-cols-7 gap-1 lg:gap-2">
                 {/* Empty cells for first week */}
                 {Array.from({ length: monthStart.getDay() }).map((_, i) => (
                   <div key={`empty-${i}`} className="aspect-square" />
@@ -611,32 +625,34 @@ export default function CalendarPage() {
                   return (
                     <div
                       key={day.toString()}
-                      className={`aspect-square border border-white/10 rounded-lg p-2 hover:bg-white/5 cursor-pointer transition-all ${
+                      className={`aspect-square border border-white/10 rounded-lg p-1 lg:p-2 hover:bg-white/5 cursor-pointer transition-all ${
                         isTodayDate ? 'border-[#8ab4f8]' : ''
                       }`}
                       onClick={() => {
                         setCurrentDate(day);
-                        setView('week');
+                        setView('day');
                       }}
                     >
-                      <div className={`text-sm mb-1 ${
-                        isTodayDate ? 'w-6 h-6 bg-[#8ab4f8] text-[#202124] rounded-full flex items-center justify-center font-medium' : ''
+                      <div className={`text-xs lg:text-sm mb-0.5 lg:mb-1 ${
+                        isTodayDate ? 'w-5 h-5 lg:w-6 lg:h-6 bg-[#8ab4f8] text-[#202124] rounded-full flex items-center justify-center font-medium text-[10px] lg:text-sm' : ''
                       }`}>
                         {format(day, 'd')}
                       </div>
-                      <div className="space-y-1">
-                        {dayEvents.slice(0, 3).map((event, i) => (
+                      <div className="space-y-0.5 lg:space-y-1">
+                        {dayEvents.slice(0, 2).map((event, i) => (
                           <div
                             key={i}
-                            className="text-xs px-1 py-0.5 rounded truncate"
+                            className="text-[8px] lg:text-xs px-0.5 lg:px-1 py-0.5 rounded truncate"
                             style={{ backgroundColor: event.color + '40', color: event.color }}
                           >
-                            {event.title}
+                            <span className="hidden lg:inline">{event.title}</span>
+                            <span className="lg:hidden">•</span>
                           </div>
                         ))}
-                        {dayEvents.length > 3 && (
-                          <div className="text-xs opacity-60">
-                            +{dayEvents.length - 3} more
+                        {dayEvents.length > 2 && (
+                          <div className="text-[8px] lg:text-xs opacity-60">
+                            <span className="hidden lg:inline">+{dayEvents.length - 2} more</span>
+                            <span className="lg:hidden">+{dayEvents.length - 2}</span>
                           </div>
                         )}
                       </div>
@@ -651,9 +667,9 @@ export default function CalendarPage() {
 
       {/* Event Modal */}
       {showEventModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6">
-          <div className="bg-[#202124] border border-white/20 rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-normal mb-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 lg:px-6">
+          <div className="bg-[#202124] border border-white/20 rounded-xl p-4 lg:p-6 w-full max-w-md">
+            <h2 className="text-lg lg:text-xl font-normal mb-4 lg:mb-6">
               {selectedEvent ? 'Edit Event' : 'Add Event'}
             </h2>
 
