@@ -72,7 +72,7 @@ export default function TimePicker({ value, onChange, label }: TimePickerProps) 
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-[#202124] border border-white/10 rounded-xl p-4 z-[100] shadow-2xl">
+        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-[#202124] border border-white/10 rounded-xl p-4 z-[100] shadow-2xl w-[280px]">
           <div className="flex gap-3 mb-4">
             {/* Hours */}
             <div className="flex-1">
