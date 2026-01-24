@@ -65,124 +65,144 @@ export default function DatePicker({ value, onChange, placeholder = 'Select date
     onChange('');
   };
 
+  const renderCalendarContent = () => (
+    <>
+      {/* Month navigation */}
+      <div className="flex items-center justify-between mb-4">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            setCurrentMonth(subMonths(currentMonth, 1));
+          }}
+          className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-full transition-all text-lg"
+        >
+          ‹
+        </button>
+        <div className="font-medium text-sm">
+          {format(currentMonth, 'MMMM yyyy')}
+        </div>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            setCurrentMonth(addMonths(currentMonth, 1));
+          }}
+          className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-full transition-all text-lg"
+        >
+          ›
+        </button>
+      </div>
+
+      {/* Day labels */}
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+          <div key={i} className="text-center text-xs opacity-50 font-medium py-2">
+            {day}
+          </div>
+        ))}
+      </div>
+
+      {/* Days grid */}
+      <div className="grid grid-cols-7 gap-1">
+        {allDays.map((day, i) => {
+          const isSelected = selectedDate && isSameDay(day, selectedDate);
+          const isCurrentMonth = isSameMonth(day, currentMonth);
+          const isTodayDate = isToday(day);
+
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                handleDateSelect(day);
+              }}
+              className={`
+                w-9 h-9 rounded-full flex items-center justify-center text-sm transition-all
+                ${isSelected ? 'bg-[#8ab4f8] text-[#202124] font-medium hover:bg-[#aecbfa]' : 'hover:bg-white/10'}
+                ${!isCurrentMonth ? 'opacity-40' : ''}
+                ${isTodayDate && !isSelected ? 'border border-white/30' : ''}
+              `}
+            >
+              {day.getDate()}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Quick actions */}
+      <div className="flex gap-2 mt-4 pt-4 border-t border-white/10">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            handleDateSelect(new Date());
+          }}
+          className="flex-1 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs transition-all"
+        >
+          Today
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            handleClear(e);
+            setIsOpen(false);
+          }}
+          className="flex-1 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs transition-all"
+        >
+          Clear
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <div ref={ref} className={`relative ${className}`}>
       {/* Input trigger */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-left text-white text-sm focus:outline-none focus:border-white/30 transition-all flex items-center justify-between"
-      >
-        <span className={selectedDate ? '' : 'opacity-30'}>
-          {selectedDate ? format(selectedDate, 'MMM d, yyyy') : placeholder}
-        </span>
-        <div className="flex items-center gap-2">
-          {selectedDate && (
-            <button
-              onClick={handleClear}
-              className="w-5 h-5 flex items-center justify-center hover:bg-white/10 rounded transition-all"
-            >
-              ✕
-            </button>
-          )}
-          <svg className="w-4 h-4 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-        </div>
-      </button>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-left text-white text-sm focus:outline-none focus:border-white/30 transition-all flex items-center justify-between"
+        >
+          <span className={selectedDate ? '' : 'opacity-30'}>
+            {selectedDate ? format(selectedDate, 'MMM d, yyyy') : placeholder}
+          </span>
+          <div className="flex items-center gap-2">
+            {selectedDate && <span className="text-white/40">✕</span>}
+            <svg className="w-4 h-4 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+        </button>
+        {selectedDate && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="absolute right-10 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center hover:bg-white/10 rounded transition-all text-white/60 hover:text-white z-10"
+          >
+            ✕
+          </button>
+        )}
+      </div>
 
       {/* Calendar dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 lg:left-0 lg:translate-x-0 mt-2 bg-[#202124] border border-white/10 rounded-xl p-4 z-[100] shadow-2xl w-[320px]">
-          {/* Month navigation */}
-          <div className="flex items-center justify-between mb-4">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                setCurrentMonth(subMonths(currentMonth, 1));
-              }}
-              className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-full transition-all text-lg"
-            >
-              ‹
-            </button>
-            <div className="font-medium text-sm">
-              {format(currentMonth, 'MMMM yyyy')}
+        <>
+          {/* Mobile: Fixed overlay */}
+          <div className="lg:hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+            <div className="bg-[#202124] border border-white/10 rounded-xl p-4 shadow-2xl w-full max-w-[320px]">
+              {renderCalendarContent()}
             </div>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                setCurrentMonth(addMonths(currentMonth, 1));
-              }}
-              className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-full transition-all text-lg"
-            >
-              ›
-            </button>
           </div>
 
-          {/* Day labels */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
-            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-              <div key={i} className="text-center text-xs opacity-50 font-medium py-2">
-                {day}
-              </div>
-            ))}
+          {/* Desktop: Dropdown below input */}
+          <div className="hidden lg:block absolute top-full left-0 mt-2 bg-[#202124] border border-white/10 rounded-xl p-4 z-[100] shadow-2xl w-[320px]">
+            {renderCalendarContent()}
           </div>
-
-          {/* Days grid */}
-          <div className="grid grid-cols-7 gap-1">
-            {allDays.map((day, i) => {
-              const isSelected = selectedDate && isSameDay(day, selectedDate);
-              const isCurrentMonth = isSameMonth(day, currentMonth);
-              const isTodayDate = isToday(day);
-
-              return (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleDateSelect(day);
-                  }}
-                  className={`
-                    w-9 h-9 rounded-full flex items-center justify-center text-sm transition-all
-                    ${isSelected ? 'bg-[#8ab4f8] text-[#202124] font-medium hover:bg-[#aecbfa]' : 'hover:bg-white/10'}
-                    ${!isCurrentMonth ? 'opacity-40' : ''}
-                    ${isTodayDate && !isSelected ? 'border border-white/30' : ''}
-                  `}
-                >
-                  {day.getDate()}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Quick actions */}
-          <div className="flex gap-2 mt-4 pt-4 border-t border-white/10">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                handleDateSelect(new Date());
-              }}
-              className="flex-1 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs transition-all"
-            >
-              Today
-            </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                handleClear(e);
-                setIsOpen(false);
-              }}
-              className="flex-1 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs transition-all"
-            >
-              Clear
-            </button>
-          </div>
-        </div>
+        </>
       )}
     </div>
   );
