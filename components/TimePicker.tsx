@@ -47,7 +47,7 @@ export default function TimePicker({ value, onChange, label }: TimePickerProps) 
   };
 
   const displayHour = () => {
-    let h = parseInt(hour);
+    const h = parseInt(hour);
     if (h === 0) return '12';
     if (h > 12) return (h - 12).toString();
     return h.toString();
