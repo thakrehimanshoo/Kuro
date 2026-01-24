@@ -93,7 +93,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Select date
 
       {/* Calendar dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 bg-[#202124] border border-white/10 rounded-xl p-4 z-[100] shadow-2xl min-w-[320px]">
+        <div className="absolute top-full left-0 right-0 lg:left-0 lg:right-auto mt-2 bg-[#202124] border border-white/10 rounded-xl p-4 z-[100] shadow-2xl lg:min-w-[320px] max-w-[320px] mx-auto lg:mx-0">
           {/* Month navigation */}
           <div className="flex items-center justify-between mb-4">
             <button
