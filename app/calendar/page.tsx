@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay, isToday, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay, isToday, startOfMonth, endOfMonth, addMonths, subMonths, addDays, subDays } from 'date-fns';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type CalendarEvent } from '@/lib/db';
 import BottomNav from '@/components/BottomNav';
 import DatePicker from '@/components/DatePicker';
+import TimePicker from '@/components/TimePicker';
 
-type ViewType = 'week' | 'month';
+type ViewType = 'day' | 'week' | 'month';
 
 export default function CalendarPage() {
   const [view, setView] = useState<ViewType>('week');
@@ -155,13 +156,21 @@ export default function CalendarPage() {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => view === 'week' ? setCurrentDate(subWeeks(currentDate, 1)) : setCurrentDate(subMonths(currentDate, 1))}
+              onClick={() => {
+                if (view === 'day') setCurrentDate(subDays(currentDate, 1));
+                else if (view === 'week') setCurrentDate(subWeeks(currentDate, 1));
+                else setCurrentDate(subMonths(currentDate, 1));
+              }}
               className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-full transition-all"
             >
               ‹
             </button>
             <button
-              onClick={() => view === 'week' ? setCurrentDate(addWeeks(currentDate, 1)) : setCurrentDate(addMonths(currentDate, 1))}
+              onClick={() => {
+                if (view === 'day') setCurrentDate(addDays(currentDate, 1));
+                else if (view === 'week') setCurrentDate(addWeeks(currentDate, 1));
+                else setCurrentDate(addMonths(currentDate, 1));
+              }}
               className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-full transition-all"
             >
               ›
@@ -169,12 +178,20 @@ export default function CalendarPage() {
           </div>
 
           <h1 className="text-xl font-normal">
-            {format(currentDate, 'MMMM yyyy')}
+            {view === 'day' ? format(currentDate, 'EEEE, MMMM d, yyyy') : format(currentDate, 'MMMM yyyy')}
           </h1>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="hidden lg:flex items-center gap-2 bg-white/5 rounded-lg p-1">
+            <button
+              onClick={() => setView('day')}
+              className={`px-3 py-1.5 rounded text-sm transition-all ${
+                view === 'day' ? 'bg-white/10' : 'hover:bg-white/5'
+              }`}
+            >
+              Day
+            </button>
             <button
               onClick={() => setView('week')}
               className={`px-3 py-1.5 rounded text-sm transition-all ${
@@ -204,7 +221,124 @@ export default function CalendarPage() {
 
       {/* Calendar View */}
       <div className="flex-1 overflow-hidden">
-        {view === 'week' ? (
+        {view === 'day' ? (
+          // Day View
+          <div className="flex h-full">
+            {/* Time column */}
+            <div className="w-20 flex-shrink-0 border-r border-white/10">
+              <div className="h-20 flex items-center justify-center border-b border-white/10">
+                <div className="text-sm font-medium">{format(currentDate, 'EEE d')}</div>
+              </div>
+              {hours.map(hour => (
+                <div key={hour} className="h-16 text-sm opacity-40 pr-3 text-right pt-1">
+                  {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                </div>
+              ))}
+            </div>
+
+            {/* Day column */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="min-w-full">
+                {/* Day header with current time indicator */}
+                <div className={`h-20 flex items-center justify-center border-b border-white/10 ${
+                  isToday(currentDate) ? 'bg-[#8ab4f8]/10' : ''
+                }`}>
+                  <div className={`w-14 h-14 flex items-center justify-center rounded-full text-2xl ${
+                    isToday(currentDate) ? 'bg-[#8ab4f8] text-[#202124] font-medium' : 'text-white/60'
+                  }`}>
+                    {format(currentDate, 'd')}
+                  </div>
+                </div>
+
+                {/* Time slots */}
+                <div className="relative">
+                  {hours.map(hour => (
+                    <div
+                      key={hour}
+                      className="h-16 border-b border-white/5 hover:bg-white/[0.02] cursor-pointer transition-colors"
+                      onClick={() => {
+                        setNewEventDate(format(currentDate, 'yyyy-MM-dd'));
+                        setNewEventStartTime(`${hour.toString().padStart(2, '0')}:00`);
+                        setNewEventEndTime(`${(hour + 1).toString().padStart(2, '0')}:00`);
+                        handleCreateEvent();
+                      }}
+                    />
+                  ))}
+
+                  {/* Current time indicator */}
+                  {isToday(currentDate) && (() => {
+                    const now = new Date();
+                    const currentHour = now.getHours();
+                    const currentMinute = now.getMinutes();
+                    const top = currentHour * 64 + (currentMinute / 60) * 64;
+
+                    return (
+                      <div
+                        className="absolute left-0 right-0 flex items-center z-10"
+                        style={{ top: `${top}px` }}
+                      >
+                        <div className="w-3 h-3 bg-[#ea4335] rounded-full -ml-1.5" />
+                        <div className="flex-1 h-0.5 bg-[#ea4335]" />
+                      </div>
+                    );
+                  })()}
+
+                  {/* Events overlay */}
+                  {getEventsForDay(currentDate).map((event, i) => {
+                    if (event.allDay) {
+                      return (
+                        <div
+                          key={i}
+                          className="absolute top-2 left-2 right-2 px-3 py-2 rounded-lg text-sm font-medium"
+                          style={{ backgroundColor: event.color + '40', color: event.color }}
+                        >
+                          {event.title}
+                        </div>
+                      );
+                    }
+
+                    const startHour = event.start.getHours();
+                    const startMinute = event.start.getMinutes();
+                    const duration = (event.end.getTime() - event.start.getTime()) / (1000 * 60);
+                    const top = startHour * 64 + (startMinute / 60) * 64;
+                    const height = (duration / 60) * 64;
+
+                    return (
+                      <div
+                        key={i}
+                        className="absolute left-2 right-2 px-3 py-2 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                        style={{
+                          backgroundColor: event.color + '90',
+                          top: `${top}px`,
+                          height: `${Math.max(height, 40)}px`,
+                        }}
+                        onClick={() => {
+                          if (event.id) {
+                            const fullEvent = calendarEvents?.find(e => e.id === event.id);
+                            if (fullEvent) {
+                              setSelectedEvent(fullEvent);
+                              setNewEventTitle(fullEvent.title);
+                              setNewEventDate(format(new Date(fullEvent.startDate), 'yyyy-MM-dd'));
+                              setNewEventStartTime(format(new Date(fullEvent.startDate), 'HH:mm'));
+                              setNewEventEndTime(format(new Date(fullEvent.endDate), 'HH:mm'));
+                              setIsAllDay(fullEvent.allDay);
+                              setShowEventModal(true);
+                            }
+                          }
+                        }}
+                      >
+                        <div className="font-medium text-sm truncate">{event.title}</div>
+                        <div className="text-xs opacity-90 mt-0.5">
+                          {format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : view === 'week' ? (
           // Week View
           <div className="flex h-full">
             {/* Time column */}
@@ -418,24 +552,16 @@ export default function CalendarPage() {
 
               {!isAllDay && (
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm opacity-60 mb-2">Start time</label>
-                    <input
-                      type="time"
-                      value={newEventStartTime}
-                      onChange={(e) => setNewEventStartTime(e.target.value)}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#8ab4f8]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm opacity-60 mb-2">End time</label>
-                    <input
-                      type="time"
-                      value={newEventEndTime}
-                      onChange={(e) => setNewEventEndTime(e.target.value)}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#8ab4f8]"
-                    />
-                  </div>
+                  <TimePicker
+                    value={newEventStartTime}
+                    onChange={setNewEventStartTime}
+                    label="Start time"
+                  />
+                  <TimePicker
+                    value={newEventEndTime}
+                    onChange={setNewEventEndTime}
+                    label="End time"
+                  />
                 </div>
               )}
             </div>
