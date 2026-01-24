@@ -405,56 +405,64 @@ export default function TasksPage() {
           )
         ) : (
           // Kanban View
-          <div className="px-6 lg:px-12 py-6 flex gap-4 overflow-x-auto min-h-full">
+          <div className="px-3 lg:px-12 py-4 lg:py-6 flex gap-3 lg:gap-4 overflow-x-auto min-h-full">
             {[
-              { key: 'high', label: 'High Priority', tasks: kanbanColumns.high, color: 'border-red-500/30' },
-              { key: 'medium', label: 'Medium Priority', tasks: kanbanColumns.medium, color: 'border-yellow-500/30' },
-              { key: 'low', label: 'Low Priority', tasks: kanbanColumns.low, color: 'border-green-500/30' },
-            ].map(({ key, label, tasks, color }) => (
-              <div key={key} className="flex-1 min-w-[280px] max-w-[400px]">
-                <div className={`bg-white/[0.02] border ${color} rounded-2xl p-4 h-full flex flex-col`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-medium opacity-60">{label}</h3>
+              { key: 'high', label: 'High Priority', shortLabel: 'High', tasks: kanbanColumns.high, color: 'border-red-500/30' },
+              { key: 'medium', label: 'Medium Priority', shortLabel: 'Medium', tasks: kanbanColumns.medium, color: 'border-yellow-500/30' },
+              { key: 'low', label: 'Low Priority', shortLabel: 'Low', tasks: kanbanColumns.low, color: 'border-green-500/30' },
+            ].map(({ key, label, shortLabel, tasks, color }) => (
+              <div key={key} className="flex-1 min-w-[240px] lg:min-w-[280px] max-w-[400px]">
+                <div className={`bg-white/[0.02] border ${color} rounded-xl lg:rounded-2xl p-3 lg:p-4 h-full flex flex-col`}>
+                  <div className="flex items-center justify-between mb-3 lg:mb-4">
+                    <h3 className="text-xs lg:text-sm font-medium opacity-60">
+                      <span className="hidden sm:inline">{label}</span>
+                      <span className="sm:hidden">{shortLabel}</span>
+                    </h3>
                     <span className="text-xs opacity-40">{tasks.length}</span>
                   </div>
-                  <div className="space-y-3 flex-1 overflow-y-auto">
+                  <div className="space-y-2 lg:space-y-3 flex-1 overflow-y-auto">
                     {tasks.map(task => {
                       const dateLabel = getDateLabel(task.dueDate);
 
                       return (
                         <div
                           key={task.id}
-                          className="bg-white/[0.03] border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all cursor-pointer"
+                          className="bg-white/[0.03] border border-white/10 rounded-lg lg:rounded-xl p-3 lg:p-4 hover:border-white/20 transition-all cursor-pointer"
                           onClick={() => handleEditTask(task)}
                         >
                           <div className="flex items-start justify-between gap-2 mb-2">
-                            <span className="text-sm">{task.title}</span>
+                            <span className="text-xs lg:text-sm leading-tight">{task.title}</span>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleToggleTask(task);
                               }}
-                              className="flex-shrink-0 w-5 h-5 rounded border border-white/40 flex items-center justify-center hover:border-white"
+                              className="flex-shrink-0 w-4 h-4 lg:w-5 lg:h-5 rounded border border-white/40 flex items-center justify-center hover:border-white"
                             >
                               {task.completed && (
-                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <svg className="w-2.5 h-2.5 lg:w-3 lg:h-3" fill="currentColor" viewBox="0 0 20 20">
                                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                 </svg>
                               )}
                             </button>
                           </div>
                           {dateLabel && (
-                            <div className={`text-xs ${dateLabel.color} mb-2`}>
+                            <div className={`text-[10px] lg:text-xs ${dateLabel.color} mb-2`}>
                               {dateLabel.text}
                             </div>
                           )}
                           {task.tags && task.tags.length > 0 && (
                             <div className="flex gap-1 flex-wrap">
-                              {task.tags.map(tag => (
-                                <span key={tag} className="px-2 py-0.5 bg-white/10 rounded text-xs">
+                              {task.tags.slice(0, 2).map(tag => (
+                                <span key={tag} className="px-1.5 lg:px-2 py-0.5 bg-white/10 rounded text-[10px] lg:text-xs">
                                   #{tag}
                                 </span>
                               ))}
+                              {task.tags.length > 2 && (
+                                <span className="px-1.5 lg:px-2 py-0.5 bg-white/10 rounded text-[10px] lg:text-xs opacity-60">
+                                  +{task.tags.length - 2}
+                                </span>
+                              )}
                             </div>
                           )}
                         </div>

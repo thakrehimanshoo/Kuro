@@ -184,12 +184,6 @@ export default function CalendarPage() {
     }
   }, [selectedEvent]);
 
-  const getEventsForDay = (day: Date) => {
-    return visibleEvents.filter(event =>
-      isSameDay(new Date(event.start), day)
-    );
-  };
-
   // Drag handlers - memoized for performance
   const handleDragStart = useCallback((event: CalendarEvent, type: 'move' | 'resize-top' | 'resize-bottom', e: React.MouseEvent) => {
     e.stopPropagation();
