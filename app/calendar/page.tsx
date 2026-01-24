@@ -332,54 +332,56 @@ export default function CalendarPage() {
       <div className="flex-1 overflow-hidden">
         {view === 'day' ? (
           // Day View
-          <div className="flex h-full">
-            {/* Time column */}
-            <div className="w-12 lg:w-20 flex-shrink-0 border-r border-white/10">
-              <div className="h-16 lg:h-20 flex items-center justify-center border-b border-white/10">
-                <div className="text-xs lg:text-sm font-medium">{format(currentDate, 'EEE d')}</div>
-              </div>
-              {HOURS.map(hour => (
-                <div key={hour} className="h-12 lg:h-16 text-xs lg:text-sm opacity-40 pr-1 lg:pr-3 text-right pt-1">
-                  {hour === 0 ? '12a' : hour < 12 ? `${hour}a` : hour === 12 ? '12p' : `${hour - 12}p`}
-                </div>
-              ))}
-            </div>
-
-            {/* Day column */}
+          <div className="flex h-full overflow-hidden">
+            {/* Scrollable container */}
             <div className="flex-1 overflow-y-auto">
-              <div className="min-w-full">
-                {/* Day header with current time indicator */}
-                <div className={`h-16 lg:h-20 flex items-center justify-center border-b border-white/10 ${
-                  isToday(currentDate) ? 'bg-[#8ab4f8]/10' : ''
-                }`}>
-                  <div className={`w-10 h-10 lg:w-14 lg:h-14 flex items-center justify-center rounded-full text-xl lg:text-2xl ${
-                    isToday(currentDate) ? 'bg-[#8ab4f8] text-[#202124] font-medium' : 'text-white/60'
-                  }`}>
-                    {format(currentDate, 'd')}
+              <div className="flex">
+                {/* Time column - scrolls with content */}
+                <div className="w-16 lg:w-20 flex-shrink-0 border-r border-white/10 sticky left-0 bg-[#1a1a1a] z-10">
+                  <div className="h-20 flex items-center justify-center border-b border-white/10">
+                    <div className="text-xs lg:text-sm font-medium">{format(currentDate, 'EEE d')}</div>
                   </div>
+                  {HOURS.map(hour => (
+                    <div key={hour} className="h-16 text-xs lg:text-sm opacity-40 pr-2 lg:pr-3 text-right pt-1">
+                      {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                    </div>
+                  ))}
                 </div>
 
-                {/* Time slots */}
-                <div
-                  className="relative"
-                  onMouseMove={handleDragMove}
-                  onMouseUp={handleDragEnd}
-                  onMouseLeave={handleDragEnd}
-                >
-                  {HOURS.map(hour => (
-                    <div
-                      key={hour}
-                      className="h-12 lg:h-16 border-b border-white/5 hover:bg-white/[0.02] cursor-pointer transition-colors"
-                      onClick={() => {
-                        if (!isDragging) {
-                          setNewEventDate(format(currentDate, 'yyyy-MM-dd'));
-                          setNewEventStartTime(`${hour.toString().padStart(2, '0')}:00`);
-                          setNewEventEndTime(`${(hour + 1).toString().padStart(2, '0')}:00`);
-                          handleCreateEvent();
-                        }
-                      }}
-                    />
-                  ))}
+                {/* Day column */}
+                <div className="flex-1">
+                  {/* Day header with current time indicator */}
+                  <div className={`h-20 flex items-center justify-center border-b border-white/10 sticky top-0 bg-[#1a1a1a] z-10 ${
+                    isToday(currentDate) ? 'bg-[#8ab4f8]/10' : ''
+                  }`}>
+                    <div className={`w-12 h-12 lg:w-14 lg:h-14 flex items-center justify-center rounded-full text-xl lg:text-2xl ${
+                      isToday(currentDate) ? 'bg-[#8ab4f8] text-[#202124] font-medium' : 'text-white/60'
+                    }`}>
+                      {format(currentDate, 'd')}
+                    </div>
+                  </div>
+
+                  {/* Time slots */}
+                  <div
+                    className="relative"
+                    onMouseMove={handleDragMove}
+                    onMouseUp={handleDragEnd}
+                    onMouseLeave={handleDragEnd}
+                  >
+                    {HOURS.map(hour => (
+                      <div
+                        key={hour}
+                        className="h-16 border-b border-white/5 hover:bg-white/[0.02] cursor-pointer transition-colors"
+                        onClick={() => {
+                          if (!isDragging) {
+                            setNewEventDate(format(currentDate, 'yyyy-MM-dd'));
+                            setNewEventStartTime(`${hour.toString().padStart(2, '0')}:00`);
+                            setNewEventEndTime(`${(hour + 1).toString().padStart(2, '0')}:00`);
+                            handleCreateEvent();
+                          }
+                        }}
+                      />
+                    ))}
 
                   {/* Current time indicator */}
                   {isToday(currentDate) && (() => {
@@ -485,6 +487,7 @@ export default function CalendarPage() {
                       </div>
                     );
                   })}
+                  </div>
                 </div>
               </div>
             </div>
@@ -493,10 +496,10 @@ export default function CalendarPage() {
           // Week View
           <div className="flex h-full">
             {/* Time column */}
-            <div className="w-10 lg:w-16 flex-shrink-0 border-r border-white/10">
-              <div className="h-12 lg:h-16" /> {/* Spacer for header */}
+            <div className="w-14 lg:w-16 flex-shrink-0 border-r border-white/10">
+              <div className="h-16" /> {/* Spacer for header */}
               {HOURS.map(hour => (
-                <div key={hour} className="h-12 lg:h-16 text-[10px] lg:text-xs opacity-40 pr-1 lg:pr-2 text-right pt-1">
+                <div key={hour} className="h-16 text-[10px] lg:text-xs opacity-40 pr-1 lg:pr-2 text-right pt-1">
                   {hour === 0 ? '12a' : hour < 12 ? `${hour}a` : hour === 12 ? '12p' : `${hour - 12}p`}
                 </div>
               ))}
@@ -510,13 +513,13 @@ export default function CalendarPage() {
                   const isTodayDate = isToday(day);
 
                   return (
-                    <div key={day.toString()} className="flex-1 border-r border-white/10 min-w-[80px] lg:min-w-0">
+                    <div key={day.toString()} className="flex-1 border-r border-white/10 min-w-[90px] lg:min-w-0">
                       {/* Day header */}
-                      <div className={`h-12 lg:h-16 flex flex-col items-center justify-center border-b border-white/10 ${
+                      <div className={`h-16 flex flex-col items-center justify-center border-b border-white/10 ${
                         isTodayDate ? 'bg-[#8ab4f8]/10' : ''
                       }`}>
                         <div className="text-[10px] lg:text-xs opacity-60">{format(day, 'EEE')}</div>
-                        <div className={`w-7 h-7 lg:w-10 lg:h-10 flex items-center justify-center rounded-full text-xs lg:text-base ${
+                        <div className={`w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-full text-sm lg:text-base ${
                           isTodayDate ? 'bg-[#8ab4f8] text-[#202124] font-medium' : ''
                         }`}>
                           {format(day, 'd')}
@@ -533,7 +536,7 @@ export default function CalendarPage() {
                         {HOURS.map(hour => (
                           <div
                             key={hour}
-                            className="h-12 lg:h-16 border-b border-white/5 hover:bg-white/[0.02] cursor-pointer"
+                            className="h-16 border-b border-white/5 hover:bg-white/[0.02] cursor-pointer"
                             onClick={() => {
                               if (!isDragging) {
                                 setNewEventDate(format(day, 'yyyy-MM-dd'));

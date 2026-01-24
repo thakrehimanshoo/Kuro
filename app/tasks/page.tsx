@@ -404,34 +404,33 @@ export default function TasksPage() {
             </div>
           )
         ) : (
-          // Kanban View
-          <div className="px-3 lg:px-12 py-4 lg:py-6 flex gap-3 lg:gap-4 overflow-x-auto min-h-full">
+          // Board View - Horizontal Rows
+          <div className="px-3 lg:px-12 py-4 lg:py-6 space-y-4 lg:space-y-6 overflow-y-auto">
             {[
-              { key: 'high', label: 'High Priority', shortLabel: 'High', tasks: kanbanColumns.high, color: 'border-red-500/30' },
-              { key: 'medium', label: 'Medium Priority', shortLabel: 'Medium', tasks: kanbanColumns.medium, color: 'border-yellow-500/30' },
-              { key: 'low', label: 'Low Priority', shortLabel: 'Low', tasks: kanbanColumns.low, color: 'border-green-500/30' },
-            ].map(({ key, label, shortLabel, tasks, color }) => (
-              <div key={key} className="flex-1 min-w-[240px] lg:min-w-[280px] max-w-[400px]">
-                <div className={`bg-white/[0.02] border ${color} rounded-xl lg:rounded-2xl p-3 lg:p-4 h-full flex flex-col`}>
-                  <div className="flex items-center justify-between mb-3 lg:mb-4">
-                    <h3 className="text-xs lg:text-sm font-medium opacity-60">
-                      <span className="hidden sm:inline">{label}</span>
-                      <span className="sm:hidden">{shortLabel}</span>
-                    </h3>
-                    <span className="text-xs opacity-40">{tasks.length}</span>
-                  </div>
-                  <div className="space-y-2 lg:space-y-3 flex-1 overflow-y-auto">
-                    {tasks.map(task => {
+              { key: 'high', label: 'High Priority', tasks: kanbanColumns.high, color: 'border-red-500/30', bgColor: 'bg-red-500/5' },
+              { key: 'medium', label: 'Medium Priority', tasks: kanbanColumns.medium, color: 'border-yellow-500/30', bgColor: 'bg-yellow-500/5' },
+              { key: 'low', label: 'Low Priority', tasks: kanbanColumns.low, color: 'border-green-500/30', bgColor: 'bg-green-500/5' },
+            ].map(({ key, label, tasks, color, bgColor }) => (
+              <div key={key} className={`border ${color} ${bgColor} rounded-xl lg:rounded-2xl p-3 lg:p-4`}>
+                <div className="flex items-center gap-3 mb-3 lg:mb-4">
+                  <h3 className="text-sm lg:text-base font-medium opacity-80">{label}</h3>
+                  <span className="text-xs opacity-40">({tasks.length})</span>
+                </div>
+                <div className="flex gap-2 lg:gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                  {tasks.length === 0 ? (
+                    <div className="text-xs lg:text-sm opacity-40 italic py-4">No tasks</div>
+                  ) : (
+                    tasks.map(task => {
                       const dateLabel = getDateLabel(task.dueDate);
 
                       return (
                         <div
                           key={task.id}
-                          className="bg-white/[0.03] border border-white/10 rounded-lg lg:rounded-xl p-3 lg:p-4 hover:border-white/20 transition-all cursor-pointer"
+                          className="bg-white/[0.03] border border-white/10 rounded-lg lg:rounded-xl p-3 lg:p-4 hover:border-white/20 transition-all cursor-pointer min-w-[200px] lg:min-w-[240px] max-w-[280px] flex-shrink-0"
                           onClick={() => handleEditTask(task)}
                         >
                           <div className="flex items-start justify-between gap-2 mb-2">
-                            <span className="text-xs lg:text-sm leading-tight">{task.title}</span>
+                            <span className="text-xs lg:text-sm leading-tight flex-1">{task.title}</span>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -453,22 +452,22 @@ export default function TasksPage() {
                           )}
                           {task.tags && task.tags.length > 0 && (
                             <div className="flex gap-1 flex-wrap">
-                              {task.tags.slice(0, 2).map(tag => (
+                              {task.tags.slice(0, 3).map(tag => (
                                 <span key={tag} className="px-1.5 lg:px-2 py-0.5 bg-white/10 rounded text-[10px] lg:text-xs">
                                   #{tag}
                                 </span>
                               ))}
-                              {task.tags.length > 2 && (
+                              {task.tags.length > 3 && (
                                 <span className="px-1.5 lg:px-2 py-0.5 bg-white/10 rounded text-[10px] lg:text-xs opacity-60">
-                                  +{task.tags.length - 2}
+                                  +{task.tags.length - 3}
                                 </span>
                               )}
                             </div>
                           )}
                         </div>
                       );
-                    })}
-                  </div>
+                    })
+                  )}
                 </div>
               </div>
             ))}
@@ -556,8 +555,8 @@ export default function TasksPage() {
 
       {/* Edit Task Modal */}
       {showTaskModal && editingTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-6">
-          <div className="bg-black border border-white/20 rounded-2xl p-6 lg:p-8 w-full max-w-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4 lg:px-6">
+          <div className="bg-black border border-white/20 rounded-2xl p-4 lg:p-8 w-full max-w-md">
             <h2 className="text-2xl font-extralight mb-6">Edit Task</h2>
 
             <div className="space-y-4">
@@ -658,8 +657,8 @@ export default function TasksPage() {
 
       {/* Switch Task Confirmation Modal */}
       {showSwitchTaskModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-6">
-          <div className="bg-black border border-white/20 rounded-2xl p-6 lg:p-8 w-full max-w-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4 lg:px-6">
+          <div className="bg-black border border-white/20 rounded-2xl p-4 lg:p-8 w-full max-w-md">
             <div className="text-center mb-6">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center">
                 <svg className="w-8 h-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
