@@ -2,6 +2,7 @@
 
 import { format, isToday } from 'date-fns';
 import { type CalendarEvent } from '@/lib/db';
+import { calculateEventLayout, getEventStyle } from '@/lib/calendar-utils';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
@@ -95,87 +96,97 @@ export default function WeekView({
                   ))}
 
                   {/* Events overlay */}
-                  {dayEvents.map((event, i) => {
-                    if (event.allDay) {
+                  {(() => {
+                    // Calculate layout for overlapping events
+                    const positionedEvents = calculateEventLayout(dayEvents);
+
+                    return positionedEvents.map((event, i) => {
+                      if (event.allDay) {
+                        return (
+                          <div
+                            key={i}
+                            className="absolute top-2 left-1 right-1 px-2 py-1 rounded text-xs truncate"
+                            style={{ backgroundColor: event.color + '40', color: event.color }}
+                          >
+                            {event.title}
+                          </div>
+                        );
+                      }
+
+                      const startHour = event.start.getHours();
+                      const startMinute = event.start.getMinutes();
+                      const duration = (event.end.getTime() - event.start.getTime()) / (1000 * 60);
+                      const top = startHour * 64 + (startMinute / 60) * 64;
+                      const height = (duration / 60) * 64;
+
+                      const fullEvent = event.id ? calendarEvents?.find(e => e.id === event.id) : null;
+                      const isDraggable = fullEvent && event.type === 'custom';
+
+                      // Get positioned styles for overlapping events
+                      const positionStyle = getEventStyle(event);
+
                       return (
                         <div
                           key={i}
-                          className="absolute top-2 left-1 right-1 px-2 py-1 rounded text-xs truncate"
-                          style={{ backgroundColor: event.color + '40', color: event.color }}
+                          className={`absolute rounded text-xs transition-opacity group ${
+                            isDraggable ? 'cursor-move' : 'cursor-pointer'
+                          } ${isDragging && draggedEvent?.id === event.id ? 'opacity-60' : 'hover:opacity-90'}`}
+                          style={{
+                            backgroundColor: event.color + '80',
+                            top: `${top}px`,
+                            height: `${Math.max(height, 32)}px`,
+                            left: positionStyle.left,
+                            width: positionStyle.width,
+                          }}
+                          onMouseDown={(e) => {
+                            if (isDraggable && fullEvent) {
+                              onDragStart(fullEvent, 'move', e);
+                            }
+                          }}
+                          onClick={() => {
+                            if (!isDragging && fullEvent) {
+                              onEditEvent(fullEvent);
+                            }
+                          }}
                         >
-                          {event.title}
-                        </div>
-                      );
-                    }
+                          {/* Resize handle - top */}
+                          {isDraggable && height >= 48 && (
+                            <div
+                              className="absolute top-0 left-0 right-0 h-1.5 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
+                              onMouseDown={(e) => {
+                                e.stopPropagation();
+                                if (fullEvent) onDragStart(fullEvent, 'resize-top', e);
+                              }}
+                            >
+                              <div className="h-0.5 bg-white/30 rounded-t" />
+                            </div>
+                          )}
 
-                    const startHour = event.start.getHours();
-                    const startMinute = event.start.getMinutes();
-                    const duration = (event.end.getTime() - event.start.getTime()) / (1000 * 60);
-                    const top = startHour * 64 + (startMinute / 60) * 64;
-                    const height = (duration / 60) * 64;
-
-                    const fullEvent = event.id ? calendarEvents?.find(e => e.id === event.id) : null;
-                    const isDraggable = fullEvent && event.type === 'custom';
-
-                    return (
-                      <div
-                        key={i}
-                        className={`absolute left-1 right-1 rounded text-xs transition-opacity group ${
-                          isDraggable ? 'cursor-move' : 'cursor-pointer'
-                        } ${isDragging && draggedEvent?.id === event.id ? 'opacity-60' : 'hover:opacity-90'}`}
-                        style={{
-                          backgroundColor: event.color + '80',
-                          top: `${top}px`,
-                          height: `${Math.max(height, 32)}px`,
-                        }}
-                        onMouseDown={(e) => {
-                          if (isDraggable && fullEvent) {
-                            onDragStart(fullEvent, 'move', e);
-                          }
-                        }}
-                        onClick={() => {
-                          if (!isDragging && fullEvent) {
-                            onEditEvent(fullEvent);
-                          }
-                        }}
-                      >
-                        {/* Resize handle - top */}
-                        {isDraggable && height >= 48 && (
-                          <div
-                            className="absolute top-0 left-0 right-0 h-1.5 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
-                            onMouseDown={(e) => {
-                              e.stopPropagation();
-                              if (fullEvent) onDragStart(fullEvent, 'resize-top', e);
-                            }}
-                          >
-                            <div className="h-0.5 bg-white/30 rounded-t" />
+                          <div className="px-1 lg:px-2 py-0.5 lg:py-1 overflow-hidden">
+                            <div className="font-medium truncate text-[10px] lg:text-xs">{event.title}</div>
+                            {height >= 40 && (
+                              <div className="text-[9px] lg:text-xs opacity-80 truncate">
+                                {format(event.start, 'h:mm a')}
+                              </div>
+                            )}
                           </div>
-                        )}
 
-                        <div className="px-1 lg:px-2 py-0.5 lg:py-1">
-                          <div className="font-medium truncate text-[10px] lg:text-xs">{event.title}</div>
-                          {height >= 40 && (
-                            <div className="text-[9px] lg:text-xs opacity-80">
-                              {format(event.start, 'h:mm a')}
+                          {/* Resize handle - bottom */}
+                          {isDraggable && height >= 48 && (
+                            <div
+                              className="absolute bottom-0 left-0 right-0 h-1.5 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
+                              onMouseDown={(e) => {
+                                e.stopPropagation();
+                                if (fullEvent) onDragStart(fullEvent, 'resize-bottom', e);
+                              }}
+                            >
+                              <div className="h-0.5 bg-white/30 rounded-b" />
                             </div>
                           )}
                         </div>
-
-                        {/* Resize handle - bottom */}
-                        {isDraggable && height >= 48 && (
-                          <div
-                            className="absolute bottom-0 left-0 right-0 h-1.5 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
-                            onMouseDown={(e) => {
-                              e.stopPropagation();
-                              if (fullEvent) onDragStart(fullEvent, 'resize-bottom', e);
-                            }}
-                          >
-                            <div className="h-0.5 bg-white/30 rounded-b" />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                      );
+                    });
+                  })()}
                 </div>
               </div>
             );
