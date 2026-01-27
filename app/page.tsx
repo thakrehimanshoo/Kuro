@@ -155,12 +155,49 @@ export default function TimerPage() {
     }
   };
 
-  const handleCompleteTask = async () => {
-    if (activeTaskId && activeTask && !activeTask.completed) {
-      await db.tasks.update(activeTaskId, {
-        completed: true,
-        completedAt: Date.now(),
-      });
+  const handleCompleteSession = async () => {
+    if (type === 'work' && (status === 'running' || status === 'paused')) {
+      // Save the partial session
+      const now = Date.now();
+      const timeSpentSeconds = totalTime - timeLeft;
+      const sessionDuration = timeSpentSeconds / 60; // in minutes
+      const startTime = now - (timeSpentSeconds * 1000);
+
+      if (sessionDuration > 1) { // Only save if at least 1 minute was spent
+        // Save session
+        const sessionId = await db.sessions.add({
+          type: 'work',
+          duration: sessionDuration,
+          completedAt: now,
+          date: getTodayDate(),
+          taskId: activeTaskId || undefined,
+          abandoned: false,
+        });
+
+        // Create calendar event
+        await db.calendar.add({
+          title: activeTaskId ? `🎯 Focus Session` : 'Focus Session',
+          startDate: startTime,
+          endDate: now,
+          allDay: false,
+          type: 'session',
+          linkedId: sessionId as number,
+          color: '#51cf66',
+          createdAt: now,
+          updatedAt: now,
+        });
+
+        // Auto-complete task if one is active
+        if (activeTaskId && activeTask && !activeTask.completed) {
+          await db.tasks.update(activeTaskId, {
+            completed: true,
+            completedAt: now,
+          });
+        }
+      }
+
+      // Move to next phase
+      skipToNext();
     }
   };
 
@@ -243,6 +280,7 @@ export default function TimerPage() {
             onClick={skipToNext}
             disabled={status === 'idle' && timeLeft === totalTime}
             className="w-14 h-14 rounded-full border border-white/10 flex items-center justify-center transition-all duration-200 active:scale-95 hover:border-white/30 disabled:opacity-20 disabled:hover:border-white/10"
+            title={getNextPhaseText()}
           >
             <SkipIcon className="w-6 h-6" />
           </button>
@@ -250,6 +288,19 @@ export default function TimerPage() {
 
         {/* Secondary controls */}
         <div className="flex flex-col items-center gap-3 mb-4">
+          {/* Complete Session button - shown during work sessions */}
+          {type === 'work' && (status === 'running' || status === 'paused') && (
+            <button
+              onClick={handleCompleteSession}
+              className="px-8 py-3 text-base bg-green-500/20 text-green-400 border-2 border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 transition-all duration-200 rounded-xl flex items-center gap-2 font-medium"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              Complete Session{activeTask && !activeTask.completed ? ' & Task' : ''}
+            </button>
+          )}
+
           <div className="flex items-center gap-4">
             {(status !== 'idle' || timeLeft !== totalTime) && (
               <button
@@ -260,18 +311,6 @@ export default function TimerPage() {
               </button>
             )}
           </div>
-          {/* Complete task button */}
-          {activeTask && !activeTask.completed && type === 'work' && (
-            <button
-              onClick={handleCompleteTask}
-              className="px-6 py-2 text-sm bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 hover:border-green-500/50 transition-all duration-200 rounded-lg flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-              Complete Task
-            </button>
-          )}
         </div>
 
         {/* Next phase indicator */}

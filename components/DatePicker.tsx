@@ -188,21 +188,13 @@ export default function DatePicker({ value, onChange, placeholder = 'Select date
         )}
       </div>
 
-      {/* Calendar dropdown */}
+      {/* Calendar modal - centered on all screen sizes */}
       {isOpen && (
-        <>
-          {/* Mobile: Fixed overlay */}
-          <div className="lg:hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-            <div className="bg-[#202124] border border-white/10 rounded-xl p-4 shadow-2xl w-full max-w-[320px]">
-              {renderCalendarContent()}
-            </div>
-          </div>
-
-          {/* Desktop: Dropdown below input */}
-          <div className="hidden lg:block absolute top-full left-0 mt-2 bg-[#202124] border border-white/10 rounded-xl p-4 z-[100] shadow-2xl w-[320px]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="bg-[#202124] border border-white/10 rounded-xl p-4 shadow-2xl w-full max-w-[320px]">
             {renderCalendarContent()}
           </div>
-        </>
+        </div>
       )}
     </div>
   );
