@@ -96,7 +96,7 @@ export default function TasksPage() {
     if (inputValue.trim()) {
       const tags = taskTags.split(',').map(t => t.trim()).filter(t => t);
 
-      await db.tasks.add({
+      const taskId = await db.tasks.add({
         title: inputValue.trim(),
         completed: false,
         priority: selectedPriority,
@@ -105,7 +105,7 @@ export default function TasksPage() {
         tags: tags.length > 0 ? tags : undefined,
       });
 
-      // Auto-create calendar event if due date is set
+      // Auto-create linked calendar event if due date is set
       if (dueDate) {
         await db.calendar.add({
           title: `📋 ${inputValue.trim()}`,
@@ -113,6 +113,7 @@ export default function TasksPage() {
           endDate: new Date(dueDate).getTime(),
           allDay: true,
           type: 'task',
+          linkedId: taskId as number,
           color: '#ff6b6b',
           createdAt: Date.now(),
           updatedAt: Date.now(),
@@ -161,6 +162,29 @@ export default function TasksPage() {
           updatedAt: now,
         });
       }
+
+      // Remove the task calendar event when completing (completed tasks don't show on calendar)
+      const calendarEvents = await db.calendar
+        .where('linkedId')
+        .equals(task.id)
+        .and(e => e.type === 'task')
+        .toArray();
+      for (const event of calendarEvents) {
+        if (event.id) await db.calendar.delete(event.id);
+      }
+    } else if (!isCompleting && task.id && task.dueDate) {
+      // Recreate calendar event when un-completing a task with a due date
+      await db.calendar.add({
+        title: `📋 ${task.title}`,
+        startDate: task.dueDate,
+        endDate: task.dueDate,
+        allDay: true,
+        type: 'task',
+        linkedId: task.id,
+        color: '#ff6b6b',
+        createdAt: now,
+        updatedAt: now,
+      });
     }
 
     await db.tasks.update(task.id!, {
@@ -195,13 +219,56 @@ export default function TasksPage() {
     if (!editingTask || !inputValue.trim()) return;
 
     const tags = taskTags.split(',').map(t => t.trim()).filter(t => t);
+    const newDueDate = dueDate ? new Date(dueDate).getTime() : undefined;
 
     await db.tasks.update(editingTask.id!, {
       title: inputValue.trim(),
       priority: selectedPriority,
-      dueDate: dueDate ? new Date(dueDate).getTime() : undefined,
+      dueDate: newDueDate,
       tags: tags.length > 0 ? tags : undefined,
     });
+
+    // Sync calendar event with task
+    const existingCalendarEvents = await db.calendar
+      .where('linkedId')
+      .equals(editingTask.id!)
+      .and(e => e.type === 'task')
+      .toArray();
+
+    if (newDueDate) {
+      // Task has a due date - create or update calendar event
+      if (existingCalendarEvents.length > 0) {
+        // Update existing calendar event
+        for (const event of existingCalendarEvents) {
+          if (event.id) {
+            await db.calendar.update(event.id, {
+              title: `📋 ${inputValue.trim()}`,
+              startDate: newDueDate,
+              endDate: newDueDate,
+              updatedAt: Date.now(),
+            });
+          }
+        }
+      } else {
+        // Create new calendar event
+        await db.calendar.add({
+          title: `📋 ${inputValue.trim()}`,
+          startDate: newDueDate,
+          endDate: newDueDate,
+          allDay: true,
+          type: 'task',
+          linkedId: editingTask.id!,
+          color: '#ff6b6b',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+      }
+    } else {
+      // Task has no due date - delete any calendar events
+      for (const event of existingCalendarEvents) {
+        if (event.id) await db.calendar.delete(event.id);
+      }
+    }
 
     setShowTaskModal(false);
     setEditingTask(null);
