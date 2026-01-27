@@ -2,6 +2,7 @@
 
 import { format, isToday } from 'date-fns';
 import { type CalendarEvent } from '@/lib/db';
+import { calculateEventLayout, getEventStyle } from '@/lib/calendar-utils';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
@@ -104,81 +105,93 @@ export default function DayView({
               })()}
 
               {/* Events */}
-              {events.map((event, i) => {
-                if (event.allDay) {
+              {(() => {
+                // Calculate layout for overlapping events
+                const positionedEvents = calculateEventLayout(events);
+
+                return positionedEvents.map((event, i) => {
+                  if (event.allDay) {
+                    return (
+                      <div
+                        key={i}
+                        className="absolute top-2 left-2 right-2 px-3 py-2 rounded-lg text-sm font-medium"
+                        style={{ backgroundColor: event.color + '40', color: event.color }}
+                      >
+                        {event.title}
+                      </div>
+                    );
+                  }
+
+                  const startHour = event.start.getHours();
+                  const startMinute = event.start.getMinutes();
+                  const duration = (event.end.getTime() - event.start.getTime()) / (1000 * 60);
+                  const top = startHour * 64 + (startMinute / 60) * 64;
+                  const height = (duration / 60) * 64;
+                  const fullEvent = event.id ? calendarEvents?.find(e => e.id === event.id) : null;
+                  const isDraggable = fullEvent && event.type === 'custom';
+
+                  // Get positioned styles for overlapping events
+                  const positionStyle = getEventStyle(event);
+
                   return (
                     <div
                       key={i}
-                      className="absolute top-2 left-2 right-2 px-3 py-2 rounded-lg text-sm font-medium"
-                      style={{ backgroundColor: event.color + '40', color: event.color }}
+                      className={`absolute rounded-lg transition-opacity group ${
+                        isDraggable ? 'cursor-move' : 'cursor-pointer'
+                      } ${isDragging && draggedEvent?.id === event.id ? 'opacity-60' : 'hover:opacity-90'}`}
+                      style={{
+                        backgroundColor: event.color + '90',
+                        top: `${top}px`,
+                        height: `${Math.max(height, 40)}px`,
+                        left: `calc(8px + ${positionStyle.left})`,
+                        width: `calc(${positionStyle.width} - 4px)`,
+                      }}
+                      onMouseDown={(e) => {
+                        if (isDraggable && fullEvent) {
+                          onDragStart(fullEvent, 'move', e);
+                        }
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isDragging && fullEvent) {
+                          onEditEvent(fullEvent);
+                        }
+                      }}
                     >
-                      {event.title}
+                      {isDraggable && height >= 64 && (
+                        <div
+                          className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            if (fullEvent) onDragStart(fullEvent, 'resize-top', e);
+                          }}
+                        >
+                          <div className="h-1 bg-white/30 rounded-t-lg" />
+                        </div>
+                      )}
+                      <div className="px-3 py-2 overflow-hidden">
+                        <div className="font-medium text-sm truncate">{event.title}</div>
+                        {height >= 56 && (
+                          <div className="text-xs opacity-90 mt-0.5 truncate">
+                            {format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}
+                          </div>
+                        )}
+                      </div>
+                      {isDraggable && height >= 64 && (
+                        <div
+                          className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            if (fullEvent) onDragStart(fullEvent, 'resize-bottom', e);
+                          }}
+                        >
+                          <div className="h-1 bg-white/30 rounded-b-lg" />
+                        </div>
+                      )}
                     </div>
                   );
-                }
-
-                const startHour = event.start.getHours();
-                const startMinute = event.start.getMinutes();
-                const duration = (event.end.getTime() - event.start.getTime()) / (1000 * 60);
-                const top = startHour * 64 + (startMinute / 60) * 64;
-                const height = (duration / 60) * 64;
-                const fullEvent = event.id ? calendarEvents?.find(e => e.id === event.id) : null;
-                const isDraggable = fullEvent && event.type === 'custom';
-
-                return (
-                  <div
-                    key={i}
-                    className={`absolute left-2 right-2 rounded-lg transition-opacity group ${
-                      isDraggable ? 'cursor-move' : 'cursor-pointer'
-                    } ${isDragging && draggedEvent?.id === event.id ? 'opacity-60' : 'hover:opacity-90'}`}
-                    style={{
-                      backgroundColor: event.color + '90',
-                      top: `${top}px`,
-                      height: `${Math.max(height, 40)}px`,
-                    }}
-                    onMouseDown={(e) => {
-                      if (isDraggable && fullEvent) {
-                        onDragStart(fullEvent, 'move', e);
-                      }
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!isDragging && fullEvent) {
-                        onEditEvent(fullEvent);
-                      }
-                    }}
-                  >
-                    {isDraggable && height >= 64 && (
-                      <div
-                        className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
-                        onMouseDown={(e) => {
-                          e.stopPropagation();
-                          if (fullEvent) onDragStart(fullEvent, 'resize-top', e);
-                        }}
-                      >
-                        <div className="h-1 bg-white/30 rounded-t-lg" />
-                      </div>
-                    )}
-                    <div className="px-3 py-2">
-                      <div className="font-medium text-sm truncate">{event.title}</div>
-                      <div className="text-xs opacity-90 mt-0.5">
-                        {format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}
-                      </div>
-                    </div>
-                    {isDraggable && height >= 64 && (
-                      <div
-                        className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
-                        onMouseDown={(e) => {
-                          e.stopPropagation();
-                          if (fullEvent) onDragStart(fullEvent, 'resize-bottom', e);
-                        }}
-                      >
-                        <div className="h-1 bg-white/30 rounded-b-lg" />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                });
+              })()}
             </div>
           </div>
         </div>

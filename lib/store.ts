@@ -36,6 +36,16 @@ interface TimerState {
   setActiveTask: (taskId: number | null) => void;
   canSwitchTask: () => boolean;
   switchTask: (newTaskId: number | null) => void;
+  // Returns session info if there was an active session to complete, null otherwise
+  completeActiveTaskSession: (taskId: number) => {
+    hadActiveSession: boolean;
+    timeSpentSeconds: number;
+    wasRunning: boolean;
+  };
+  // Check if a task has an active timer running
+  isTaskActive: (taskId: number) => boolean;
+  // Clear active task without stopping timer (for when task is deleted)
+  clearActiveTaskIfMatch: (taskId: number) => boolean;
 }
 
 export const useTimerStore = create<TimerState>((set, get) => ({
@@ -251,5 +261,67 @@ export const useTimerStore = create<TimerState>((set, get) => ({
     }
 
     set({ activeTaskId: newTaskId });
+  },
+
+  completeActiveTaskSession: (taskId: number) => {
+    const { status, type, timeLeft, totalTime, activeTaskId, workDuration } = get();
+
+    // If this task is not the active task, nothing to do
+    if (activeTaskId !== taskId) {
+      return { hadActiveSession: false, timeSpentSeconds: 0, wasRunning: false };
+    }
+
+    // If timer is idle and hasn't started, nothing to save
+    if (status === 'idle' && timeLeft === totalTime) {
+      set({ activeTaskId: null });
+      return { hadActiveSession: false, timeSpentSeconds: 0, wasRunning: false };
+    }
+
+    const wasRunning = status === 'running';
+    const timeSpentSeconds = totalTime - timeLeft;
+
+    // Reset the timer and clear the active task
+    set({
+      status: 'idle',
+      type: 'work',
+      timeLeft: workDuration * 60,
+      totalTime: workDuration * 60,
+      currentPomodoro: 1,
+      completedPomodoros: 0,
+      activeTaskId: null,
+    });
+
+    return { hadActiveSession: true, timeSpentSeconds, wasRunning };
+  },
+
+  isTaskActive: (taskId: number) => {
+    const { activeTaskId, status, type, timeLeft, totalTime } = get();
+    // A task is "active" if it's the activeTaskId and timer has been used
+    return activeTaskId === taskId && (status !== 'idle' || timeLeft < totalTime);
+  },
+
+  clearActiveTaskIfMatch: (taskId: number) => {
+    const { activeTaskId, status, type, timeLeft, totalTime, workDuration } = get();
+
+    if (activeTaskId !== taskId) {
+      return false;
+    }
+
+    // If there's an active session, reset the timer
+    if (status !== 'idle' || timeLeft < totalTime) {
+      set({
+        status: 'idle',
+        type: 'work',
+        timeLeft: workDuration * 60,
+        totalTime: workDuration * 60,
+        currentPomodoro: 1,
+        completedPomodoros: 0,
+        activeTaskId: null,
+      });
+    } else {
+      set({ activeTaskId: null });
+    }
+
+    return true;
   },
 }));

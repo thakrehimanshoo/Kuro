@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useRouter } from 'next/navigation';
 import { db, type Task, type TaskPriority } from '@/lib/db';
+import { getTodayDate } from '@/lib/utils';
 import { useTimerStore } from '@/lib/store';
 import BottomNav from '@/components/BottomNav';
 import DatePicker from '@/components/DatePicker';
@@ -25,7 +26,14 @@ export default function TasksPage() {
   const [showSwitchTaskModal, setShowSwitchTaskModal] = useState(false);
   const [pendingTaskId, setPendingTaskId] = useState<number | null>(null);
 
-  const { setActiveTask, activeTaskId, canSwitchTask, abandon } = useTimerStore();
+  const {
+    setActiveTask,
+    activeTaskId,
+    canSwitchTask,
+    abandon,
+    completeActiveTaskSession,
+    clearActiveTaskIfMatch
+  } = useTimerStore();
 
   const allTasks = useLiveQuery(() =>
     db.tasks.orderBy('createdAt').reverse().toArray()
@@ -119,13 +127,52 @@ export default function TasksPage() {
   };
 
   const handleToggleTask = async (task: Task) => {
+    const isCompleting = !task.completed;
+    const now = Date.now();
+
+    // If we're completing the task and it has an active timer, save the session
+    if (isCompleting && task.id) {
+      const sessionInfo = completeActiveTaskSession(task.id);
+
+      if (sessionInfo.hadActiveSession && sessionInfo.timeSpentSeconds >= 60) {
+        // Save the session to the database (minimum 1 minute)
+        const sessionDuration = sessionInfo.timeSpentSeconds / 60;
+        const startTime = now - (sessionInfo.timeSpentSeconds * 1000);
+
+        const sessionId = await db.sessions.add({
+          type: 'work',
+          duration: sessionDuration,
+          completedAt: now,
+          date: getTodayDate(),
+          taskId: task.id,
+          abandoned: false,
+        });
+
+        // Create calendar event for the session
+        await db.calendar.add({
+          title: `🎯 Focus Session`,
+          startDate: startTime,
+          endDate: now,
+          allDay: false,
+          type: 'session',
+          linkedId: sessionId as number,
+          color: '#51cf66',
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    }
+
     await db.tasks.update(task.id!, {
-      completed: !task.completed,
-      completedAt: !task.completed ? Date.now() : undefined,
+      completed: isCompleting,
+      completedAt: isCompleting ? now : undefined,
     });
   };
 
   const handleDeleteTask = async (id: number) => {
+    // If this task has an active timer, clear it (abandon the session)
+    clearActiveTaskIfMatch(id);
+
     // Delete associated calendar events
     const calendarEvents = await db.calendar.where('linkedId').equals(id).and(e => e.type === 'task').toArray();
     for (const event of calendarEvents) {
