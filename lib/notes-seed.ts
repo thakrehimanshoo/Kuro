@@ -1,20 +1,47 @@
 import { db } from './db';
 
+export async function fixDuplicateDefaultNotebooks() {
+  // Find all default notebooks
+  const defaultNotebooks = await db.notebooks.filter(nb => nb.isDefault).toArray();
+
+  if (defaultNotebooks.length > 1) {
+    // Keep the oldest one as default, unmark others
+    const sorted = defaultNotebooks.sort((a, b) => a.createdAt - b.createdAt);
+
+    for (let i = 1; i < sorted.length; i++) {
+      await db.notebooks.update(sorted[i].id!, { isDefault: false });
+    }
+  }
+}
+
 export async function seedNotesDatabase() {
+  // Fix any duplicate default notebooks first
+  await fixDuplicateDefaultNotebooks();
+
   // Check if already seeded
   const notebookCount = await db.notebooks.count();
   if (notebookCount > 0) return;
 
-  // Create default notebook
-  const defaultNotebookId = await db.notebooks.add({
-    name: 'Quick Notes',
-    description: 'Your default notebook for quick thoughts',
-    icon: '📝',
-    color: '#6366f1',
-    isDefault: true,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  });
+  // Check if there's already a default notebook (from migrations)
+  const existingDefault = await db.notebooks.filter(nb => nb.isDefault).first();
+
+  let defaultNotebookId: number;
+
+  if (existingDefault) {
+    // Use existing default notebook
+    defaultNotebookId = existingDefault.id!;
+  } else {
+    // Create default notebook
+    defaultNotebookId = await db.notebooks.add({
+      name: 'Quick Notes',
+      description: 'Your default notebook for quick thoughts',
+      icon: '📝',
+      color: '#6366f1',
+      isDefault: true,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }) as number;
+  }
 
   // Create system templates
   const templates = [
