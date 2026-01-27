@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useTimerStore } from '@/lib/store';
 import { formatTime, getTodayDate } from '@/lib/utils';
@@ -27,6 +27,25 @@ export default function TimerPage() {
     () => activeTaskId ? db.tasks.get(activeTaskId) : undefined,
     [activeTaskId]
   );
+
+  // Get sessions for active task to show time spent
+  const taskSessions = useLiveQuery(
+    async () => {
+      if (!activeTaskId) return [];
+      const sessions = await db.sessions
+        .where('taskId')
+        .equals(activeTaskId)
+        .and(s => s.type === 'work' && !s.abandoned)
+        .toArray();
+      return sessions;
+    },
+    [activeTaskId]
+  );
+
+  const totalTimeSpent = useMemo(() => {
+    if (!taskSessions) return 0;
+    return taskSessions.reduce((sum, s) => sum + s.duration, 0);
+  }, [taskSessions]);
 
   // Timer tick is now handled globally by GlobalTimerProvider in layout
   // This ensures the timer continues running when navigating between pages
@@ -61,11 +80,19 @@ export default function TimerPage() {
           createdAt: now,
           updatedAt: now,
         });
+
+        // Auto-complete task if one is active
+        if (activeTaskId && activeTask && !activeTask.completed) {
+          await db.tasks.update(activeTaskId, {
+            completed: true,
+            completedAt: now,
+          });
+        }
       }
     };
 
     saveSession();
-  }, [timeLeft, status, type, totalTime, activeTaskId]);
+  }, [timeLeft, status, type, totalTime, activeTaskId, activeTask]);
 
   const progress = totalTime > 0 ? (totalTime - timeLeft) / totalTime : 0;
 
@@ -128,6 +155,15 @@ export default function TimerPage() {
     }
   };
 
+  const handleCompleteTask = async () => {
+    if (activeTaskId && activeTask && !activeTask.completed) {
+      await db.tasks.update(activeTaskId, {
+        completed: true,
+        completedAt: Date.now(),
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-black text-white safe-top lg:ml-64">
       <div className="flex-1 flex flex-col items-center justify-center w-full px-6 lg:px-12 max-w-2xl">
@@ -155,6 +191,12 @@ export default function TimerPage() {
           {type === 'work' && (
             <div className="text-xs opacity-30">
               Session {currentPomodoro} of 4
+            </div>
+          )}
+          {/* Time spent on active task */}
+          {activeTask && !activeTask.completed && type === 'work' && totalTimeSpent > 0 && (
+            <div className="text-xs opacity-30 mt-2">
+              Time spent: {Math.floor(totalTimeSpent / 60)}h {Math.round(totalTimeSpent % 60)}m
             </div>
           )}
         </div>
@@ -207,13 +249,27 @@ export default function TimerPage() {
         </div>
 
         {/* Secondary controls */}
-        <div className="flex items-center gap-4 mb-4">
-          {(status !== 'idle' || timeLeft !== totalTime) && (
+        <div className="flex flex-col items-center gap-3 mb-4">
+          <div className="flex items-center gap-4">
+            {(status !== 'idle' || timeLeft !== totalTime) && (
+              <button
+                onClick={handleAbandon}
+                className="px-4 py-2 text-xs opacity-40 hover:opacity-100 transition-opacity duration-200 border border-white/10 rounded-lg"
+              >
+                Abandon Session
+              </button>
+            )}
+          </div>
+          {/* Complete task button */}
+          {activeTask && !activeTask.completed && type === 'work' && (
             <button
-              onClick={handleAbandon}
-              className="px-4 py-2 text-xs opacity-40 hover:opacity-100 transition-opacity duration-200 border border-white/10 rounded-lg"
+              onClick={handleCompleteTask}
+              className="px-6 py-2 text-sm bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 hover:border-green-500/50 transition-all duration-200 rounded-lg flex items-center gap-2"
             >
-              Abandon Session
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              Complete Task
             </button>
           )}
         </div>
