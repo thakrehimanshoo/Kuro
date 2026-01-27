@@ -21,6 +21,7 @@ export default function TimerPage() {
     reset,
     skipToNext,
     abandon,
+    resetCycle,
   } = useTimerStore();
 
   const activeTask = useLiveQuery(
@@ -196,8 +197,8 @@ export default function TimerPage() {
         }
       }
 
-      // Move to next phase
-      skipToNext();
+      // Reset the entire pomodoro cycle
+      resetCycle();
     }
   };
 
