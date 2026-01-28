@@ -13,6 +13,7 @@ interface WeekViewProps {
   draggedEvent: CalendarEvent | null;
   onCreateEvent: (date: string, startTime: string, endTime: string) => void;
   onEditEvent: (event: CalendarEvent) => void;
+  onTaskClick?: (taskId: number, title: string, dueDate: number) => void;
   onDragStart: (event: CalendarEvent, type: 'move' | 'resize-top' | 'resize-bottom', e: React.MouseEvent) => void;
   onDragMove: (e: React.MouseEvent) => void;
   onDragEnd: () => void;
@@ -34,6 +35,7 @@ export default function WeekView({
   draggedEvent,
   onCreateEvent,
   onEditEvent,
+  onTaskClick,
   onDragStart,
   onDragMove,
   onDragEnd,
@@ -144,8 +146,12 @@ export default function WeekView({
                             }
                           }}
                           onClick={() => {
-                            if (!isDragging && fullEvent) {
-                              onEditEvent(fullEvent);
+                            if (!isDragging) {
+                              if (event.type === 'task' && event.id && onTaskClick) {
+                                onTaskClick(event.id, event.title.replace(/^📋\s*/, ''), event.start.getTime());
+                              } else if (fullEvent) {
+                                onEditEvent(fullEvent);
+                              }
                             }
                           }}
                         >
