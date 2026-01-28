@@ -11,6 +11,7 @@ import TimePicker from '@/components/TimePicker';
 import DayView from '@/components/calendar/DayView';
 import WeekView from '@/components/calendar/WeekView';
 import MonthView from '@/components/calendar/MonthView';
+import { CalendarPageSkeleton } from '@/components/Skeleton';
 
 type ViewType = 'day' | 'week' | 'month';
 
@@ -306,6 +307,11 @@ export default function CalendarPage() {
     setCurrentDate(day);
     setView('day');
   }, []);
+
+  // Show skeleton while loading
+  if (!calendarEvents || !tasks) {
+    return <CalendarPageSkeleton />;
+  }
 
   return (
     <div className="flex flex-col h-screen bg-[#1a1a1a] text-white lg:ml-64">

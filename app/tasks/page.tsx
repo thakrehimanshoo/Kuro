@@ -8,6 +8,7 @@ import { getTodayDate } from '@/lib/utils';
 import { useTimerStore } from '@/lib/store';
 import BottomNav from '@/components/BottomNav';
 import DatePicker from '@/components/DatePicker';
+import { TasksPageSkeleton } from '@/components/Skeleton';
 import { format, isToday, isTomorrow, isPast, isThisWeek } from 'date-fns';
 
 type FilterType = 'all' | 'today' | 'upcoming' | 'overdue' | 'completed';
@@ -261,6 +262,11 @@ export default function TasksPage() {
 
     return { text: format(date, 'MMM d'), color: 'text-white/60' };
   };
+
+  // Show skeleton while loading
+  if (!allTasks) {
+    return <TasksPageSkeleton />;
+  }
 
   return (
     <div className="flex flex-col h-screen bg-black text-white lg:ml-64">
