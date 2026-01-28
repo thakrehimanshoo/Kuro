@@ -41,15 +41,62 @@ export default function DayView({
   onDragMove,
   onDragEnd,
 }: DayViewProps) {
+  // Separate all-day and timed events
+  const allDayEvents = events.filter(e => e.allDay);
+  const timedEvents = events.filter(e => !e.allDay);
+  const allDayHeight = allDayEvents.length > 0 ? Math.min(allDayEvents.length * 32 + 16, 120) : 0;
+
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Header */}
+      <div className="flex border-b border-white/10 flex-shrink-0">
+        <div className="w-16 lg:w-20 flex-shrink-0 border-r border-white/10" />
+        <div className={`flex-1 h-16 flex items-center justify-center ${
+          isToday(currentDate) ? 'bg-[#8ab4f8]/10' : ''
+        }`}>
+          <div className="text-center">
+            <div className="text-xs opacity-60">{format(currentDate, 'EEEE')}</div>
+            <div className={`w-10 h-10 flex items-center justify-center rounded-full text-lg mx-auto ${
+              isToday(currentDate) ? 'bg-[#8ab4f8] text-[#202124] font-medium' : 'text-white/60'
+            }`}>
+              {format(currentDate, 'd')}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* All-day events section */}
+      {allDayHeight > 0 && (
+        <div className="flex border-b border-white/10 flex-shrink-0" style={{ minHeight: `${allDayHeight}px` }}>
+          <div className="w-16 lg:w-20 flex-shrink-0 border-r border-white/10 flex items-start justify-end pr-2 pt-2">
+            <span className="text-[10px] lg:text-xs opacity-40">all-day</span>
+          </div>
+          <div className={`flex-1 p-2 space-y-1 overflow-y-auto ${
+            isToday(currentDate) ? 'bg-[#8ab4f8]/5' : ''
+          }`}>
+            {allDayEvents.map((event, i) => (
+              <div
+                key={i}
+                className="px-3 py-1.5 rounded-lg text-sm cursor-pointer hover:opacity-80 transition-opacity"
+                style={{ backgroundColor: event.color + '40', color: event.color }}
+                onClick={() => {
+                  if (event.type === 'task' && event.id && onTaskClick) {
+                    onTaskClick(event.id, event.title.replace(/^📋\s*/, ''), event.start.getTime());
+                  }
+                }}
+              >
+                {event.title}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Scrollable time grid */}
       <div className="flex-1 overflow-y-auto">
         <div className="flex">
           {/* Time column */}
           <div className="w-16 lg:w-20 flex-shrink-0 border-r border-white/10 sticky left-0 bg-[#1a1a1a] z-10">
-            <div className="h-20 flex items-center justify-center border-b border-white/10">
-              <div className="text-xs lg:text-sm font-medium">{format(currentDate, 'EEE d')}</div>
-            </div>
             {HOURS.map(hour => (
               <div key={hour} className="h-16 text-xs lg:text-sm opacity-40 pr-2 lg:pr-3 text-right pt-1">
                 {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
@@ -59,15 +106,6 @@ export default function DayView({
 
           {/* Day column */}
           <div className="flex-1">
-            <div className={`h-20 flex items-center justify-center border-b border-white/10 sticky top-0 bg-[#1a1a1a] z-10 ${
-              isToday(currentDate) ? 'bg-[#8ab4f8]/10' : ''
-            }`}>
-              <div className={`w-12 h-12 lg:w-14 lg:h-14 flex items-center justify-center rounded-full text-xl lg:text-2xl ${
-                isToday(currentDate) ? 'bg-[#8ab4f8] text-[#202124] font-medium' : 'text-white/60'
-              }`}>
-                {format(currentDate, 'd')}
-              </div>
-            </div>
 
             <div
               className="relative"
@@ -106,24 +144,11 @@ export default function DayView({
                 );
               })()}
 
-              {/* Events */}
+              {/* Events - only timed events (all-day shown in header) */}
               {(() => {
-                // Calculate layout for overlapping events
-                const positionedEvents = calculateEventLayout(events);
+                const positionedEvents = calculateEventLayout(timedEvents);
 
                 return positionedEvents.map((event, i) => {
-                  if (event.allDay) {
-                    return (
-                      <div
-                        key={i}
-                        className="absolute top-2 left-2 right-2 px-3 py-2 rounded-lg text-sm font-medium"
-                        style={{ backgroundColor: event.color + '40', color: event.color }}
-                      >
-                        {event.title}
-                      </div>
-                    );
-                  }
-
                   const startHour = event.start.getHours();
                   const startMinute = event.start.getMinutes();
                   const duration = (event.end.getTime() - event.start.getTime()) / (1000 * 60);

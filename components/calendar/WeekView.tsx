@@ -41,38 +41,94 @@ export default function WeekView({
   onDragEnd,
   getEventsForDay,
 }: WeekViewProps) {
+  // Calculate max all-day events for any day to determine header height
+  const maxAllDayEvents = Math.max(
+    ...weekDays.map(day => getEventsForDay(day).filter(e => e.allDay).length),
+    0
+  );
+  const allDayHeight = maxAllDayEvents > 0 ? Math.min(maxAllDayEvents * 28 + 8, 120) : 0;
+
   return (
-    <div className="flex h-full">
-      {/* Time column */}
-      <div className="w-14 lg:w-16 flex-shrink-0 border-r border-white/10">
-        <div className="h-16" /> {/* Spacer for header */}
-        {HOURS.map(hour => (
-          <div key={hour} className="h-16 text-[10px] lg:text-xs opacity-40 pr-1 lg:pr-2 text-right pt-1">
-            {hour === 0 ? '12a' : hour < 12 ? `${hour}a` : hour === 12 ? '12p' : `${hour - 12}p`}
-          </div>
-        ))}
+    <div className="flex flex-col h-full">
+      {/* Header row with day names */}
+      <div className="flex border-b border-white/10 flex-shrink-0">
+        <div className="w-14 lg:w-16 flex-shrink-0 border-r border-white/10" />
+        {weekDays.map(day => {
+          const isTodayDate = isToday(day);
+          return (
+            <div
+              key={`header-${day.toString()}`}
+              className={`flex-1 min-w-[90px] lg:min-w-0 flex flex-col items-center justify-center py-2 border-r border-white/10 ${
+                isTodayDate ? 'bg-[#8ab4f8]/10' : ''
+              }`}
+            >
+              <div className="text-[10px] lg:text-xs opacity-60">{format(day, 'EEE')}</div>
+              <div className={`w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-full text-sm lg:text-base ${
+                isTodayDate ? 'bg-[#8ab4f8] text-[#202124] font-medium' : ''
+              }`}>
+                {format(day, 'd')}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Days columns */}
-      <div className="flex-1 overflow-x-auto">
+      {/* All-day events row */}
+      {allDayHeight > 0 && (
+        <div className="flex border-b border-white/10 flex-shrink-0" style={{ minHeight: `${allDayHeight}px` }}>
+          <div className="w-14 lg:w-16 flex-shrink-0 border-r border-white/10 flex items-start justify-end pr-1 pt-1">
+            <span className="text-[9px] lg:text-[10px] opacity-40">all-day</span>
+          </div>
+          {weekDays.map(day => {
+            const allDayEvents = getEventsForDay(day).filter(e => e.allDay);
+            const isTodayDate = isToday(day);
+
+            return (
+              <div
+                key={`allday-${day.toString()}`}
+                className={`flex-1 min-w-[90px] lg:min-w-0 border-r border-white/10 p-1 space-y-1 overflow-hidden ${
+                  isTodayDate ? 'bg-[#8ab4f8]/5' : ''
+                }`}
+              >
+                {allDayEvents.map((event, i) => (
+                  <div
+                    key={i}
+                    className="px-1.5 py-0.5 rounded text-[10px] lg:text-xs truncate cursor-pointer hover:opacity-80 transition-opacity"
+                    style={{ backgroundColor: event.color + '40', color: event.color }}
+                    onClick={() => {
+                      if (event.type === 'task' && event.id && onTaskClick) {
+                        onTaskClick(event.id, event.title.replace(/^📋\s*/, ''), event.start.getTime());
+                      }
+                    }}
+                  >
+                    {event.title}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Scrollable time grid */}
+      <div className="flex-1 overflow-y-auto overflow-x-auto">
         <div className="flex min-w-full lg:min-w-[640px]">
+          {/* Time column */}
+          <div className="w-14 lg:w-16 flex-shrink-0 border-r border-white/10">
+            {HOURS.map(hour => (
+              <div key={hour} className="h-16 text-[10px] lg:text-xs opacity-40 pr-1 lg:pr-2 text-right pt-1">
+                {hour === 0 ? '12a' : hour < 12 ? `${hour}a` : hour === 12 ? '12p' : `${hour - 12}p`}
+              </div>
+            ))}
+          </div>
+
+          {/* Days columns */}
           {weekDays.map(day => {
             const dayEvents = getEventsForDay(day);
             const isTodayDate = isToday(day);
 
             return (
               <div key={day.toString()} className="flex-1 border-r border-white/10 min-w-[90px] lg:min-w-0">
-                {/* Day header */}
-                <div className={`h-16 flex flex-col items-center justify-center border-b border-white/10 ${
-                  isTodayDate ? 'bg-[#8ab4f8]/10' : ''
-                }`}>
-                  <div className="text-[10px] lg:text-xs opacity-60">{format(day, 'EEE')}</div>
-                  <div className={`w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-full text-sm lg:text-base ${
-                    isTodayDate ? 'bg-[#8ab4f8] text-[#202124] font-medium' : ''
-                  }`}>
-                    {format(day, 'd')}
-                  </div>
-                </div>
 
                 {/* Time slots */}
                 <div
@@ -97,23 +153,13 @@ export default function WeekView({
                     />
                   ))}
 
-                  {/* Events overlay */}
+                  {/* Events overlay - only timed events (all-day shown in header) */}
                   {(() => {
-                    // Calculate layout for overlapping events
-                    const positionedEvents = calculateEventLayout(dayEvents);
+                    // Filter out all-day events (they're shown in the header)
+                    const timedEvents = dayEvents.filter(e => !e.allDay);
+                    const positionedEvents = calculateEventLayout(timedEvents);
 
                     return positionedEvents.map((event, i) => {
-                      if (event.allDay) {
-                        return (
-                          <div
-                            key={i}
-                            className="absolute top-2 left-1 right-1 px-2 py-1 rounded text-xs truncate"
-                            style={{ backgroundColor: event.color + '40', color: event.color }}
-                          >
-                            {event.title}
-                          </div>
-                        );
-                      }
 
                       const startHour = event.start.getHours();
                       const startMinute = event.start.getMinutes();
