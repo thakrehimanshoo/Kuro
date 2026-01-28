@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay, startOfMonth, endOfMonth, addMonths, subMonths, addDays, subDays } from 'date-fns';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { useRouter } from 'next/navigation';
 import { db, type CalendarEvent } from '@/lib/db';
 import BottomNav from '@/components/BottomNav';
 import DatePicker from '@/components/DatePicker';
@@ -14,6 +15,7 @@ import MonthView from '@/components/calendar/MonthView';
 type ViewType = 'day' | 'week' | 'month';
 
 export default function CalendarPage() {
+  const router = useRouter();
   const [view, setView] = useState<ViewType>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showEventModal, setShowEventModal] = useState(false);
@@ -31,8 +33,9 @@ export default function CalendarPage() {
   const [dragStartY, setDragStartY] = useState(0);
   const [dragType, setDragType] = useState<'move' | 'resize-top' | 'resize-bottom' | null>(null);
 
-  // Get all calendar events
+  // Get all calendar events and tasks
   const calendarEvents = useLiveQuery(() => db.calendar.toArray());
+  const tasks = useLiveQuery(() => db.tasks.toArray());
 
   // Week view dates - memoized for performance
   const weekDays = useMemo(() => {
@@ -100,11 +103,30 @@ export default function CalendarPage() {
       });
     }
 
-    // Note: Tasks with due dates are shown via their linked calendar events (type: 'task')
-    // We don't need to read from db.tasks here as calendar events are created when tasks are added
+    // Show tasks with due dates directly from db.tasks (single source of truth)
+    if (tasks) {
+      tasks.forEach((task) => {
+        if (task.dueDate && !task.completed) {
+          const taskDate = new Date(task.dueDate);
+
+          // Only include tasks that fall within the current view
+          if (taskDate >= rangeStart && taskDate <= rangeEnd) {
+            events.push({
+              id: task.id,
+              title: `📋 ${task.title}`,
+              start: taskDate,
+              end: taskDate,
+              allDay: true,
+              type: 'task',
+              color: '#ff6b6b',
+            });
+          }
+        }
+      });
+    }
 
     return events;
-  }, [calendarEvents, currentDate, view]);
+  }, [calendarEvents, tasks, currentDate, view]);
 
   const handleCreateEvent = useCallback(() => {
     setSelectedEvent(null);
@@ -153,26 +175,14 @@ export default function CalendarPage() {
       }
     } else {
       // Create new event
-      if (createAsTask && isAllDay) {
-        // Create as a task (which will also create a calendar event)
-        const taskId = await db.tasks.add({
+      if (createAsTask) {
+        // Create as a task only (tasks are shown on calendar from db.tasks directly)
+        await db.tasks.add({
           title: newEventTitle,
           completed: false,
           priority: 'medium',
           createdAt: Date.now(),
           dueDate: startDate,
-        });
-
-        await db.calendar.add({
-          title: `📋 ${newEventTitle}`,
-          startDate,
-          endDate,
-          allDay: true,
-          type: 'task',
-          linkedId: taskId as number,
-          color: '#ff6b6b',
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
         });
       } else {
         // Create as regular calendar event
@@ -195,10 +205,6 @@ export default function CalendarPage() {
 
   const handleDeleteEvent = useCallback(async () => {
     if (selectedEvent?.id) {
-      // If this is a task event, also delete the linked task
-      if (selectedEvent.type === 'task' && selectedEvent.linkedId) {
-        await db.tasks.delete(selectedEvent.linkedId);
-      }
       await db.calendar.delete(selectedEvent.id);
       setShowEventModal(false);
       setSelectedEvent(null);
@@ -273,6 +279,10 @@ export default function CalendarPage() {
     setShowEventModal(true);
   }, []);
 
+  // State for task modal
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<{ id: number; title: string; dueDate: number } | null>(null);
+
   // Handler to edit an event
   const handleEditEvent = useCallback((event: CalendarEvent) => {
     setSelectedEvent(event);
@@ -283,6 +293,12 @@ export default function CalendarPage() {
     setIsAllDay(event.allDay);
     setCreateAsTask(false);
     setShowEventModal(true);
+  }, []);
+
+  // Handler to view/edit a task (from calendar click)
+  const handleTaskClick = useCallback((taskId: number, title: string, dueDate: number) => {
+    setSelectedTask({ id: taskId, title, dueDate });
+    setShowTaskModal(true);
   }, []);
 
   // Handler for month view day click
@@ -390,6 +406,7 @@ export default function CalendarPage() {
             draggedEvent={draggedEvent}
             onCreateEvent={handleCreateEventWithTime}
             onEditEvent={handleEditEvent}
+            onTaskClick={handleTaskClick}
             onDragStart={handleDragStart}
             onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
@@ -402,6 +419,7 @@ export default function CalendarPage() {
             draggedEvent={draggedEvent}
             onCreateEvent={handleCreateEventWithTime}
             onEditEvent={handleEditEvent}
+            onTaskClick={handleTaskClick}
             onDragStart={handleDragStart}
             onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
@@ -446,34 +464,36 @@ export default function CalendarPage() {
                 />
               </div>
 
-              <div className="flex items-center gap-6">
+              {!selectedEvent && (
+                <div className="flex items-center gap-3 p-3 bg-[#ff6b6b]/10 border border-[#ff6b6b]/30 rounded-lg">
+                  <input
+                    type="checkbox"
+                    id="createAsTask"
+                    checked={createAsTask}
+                    onChange={(e) => {
+                      setCreateAsTask(e.target.checked);
+                      if (e.target.checked) setIsAllDay(true);
+                    }}
+                    className="w-4 h-4 accent-[#ff6b6b]"
+                  />
+                  <label htmlFor="createAsTask" className="text-sm text-[#ff6b6b] font-medium">
+                    Create as Task (shows in Tasks page)
+                  </label>
+                </div>
+              )}
+
+              {!createAsTask && (
                 <div className="flex items-center gap-3">
                   <input
                     type="checkbox"
                     id="allDay"
                     checked={isAllDay}
-                    onChange={(e) => {
-                      setIsAllDay(e.target.checked);
-                      if (!e.target.checked) setCreateAsTask(false);
-                    }}
+                    onChange={(e) => setIsAllDay(e.target.checked)}
                     className="w-4 h-4"
                   />
                   <label htmlFor="allDay" className="text-sm">All day</label>
                 </div>
-
-                {isAllDay && !selectedEvent && (
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      id="createAsTask"
-                      checked={createAsTask}
-                      onChange={(e) => setCreateAsTask(e.target.checked)}
-                      className="w-4 h-4 accent-[#ff6b6b]"
-                    />
-                    <label htmlFor="createAsTask" className="text-sm text-[#ff6b6b]">Add to Tasks</label>
-                  </div>
-                )}
-              </div>
+              )}
 
               {!isAllDay && (
                 <div className="grid grid-cols-2 gap-4">
@@ -498,12 +518,12 @@ export default function CalendarPage() {
               >
                 Cancel
               </button>
-              {selectedEvent && (selectedEvent.type === 'custom' || selectedEvent.type === 'task') && (
+              {selectedEvent && selectedEvent.type === 'custom' && (
                 <button
                   onClick={handleDeleteEvent}
                   className="px-4 py-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                 >
-                  Delete{selectedEvent.type === 'task' ? ' Task' : ''}
+                  Delete
                 </button>
               )}
               <button
@@ -512,6 +532,47 @@ export default function CalendarPage() {
                 className="flex-1 px-4 py-2 bg-[#8ab4f8] text-[#202124] rounded-lg font-medium hover:bg-[#aecbfa] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Task Modal - when clicking on a task in calendar */}
+      {showTaskModal && selectedTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 lg:px-6">
+          <div className="bg-[#202124] border border-white/20 rounded-xl p-4 lg:p-6 w-full max-w-md">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-[#ff6b6b]/20 flex items-center justify-center">
+                <span className="text-lg">📋</span>
+              </div>
+              <div>
+                <h2 className="text-lg font-medium">{selectedTask.title}</h2>
+                <p className="text-sm opacity-60">
+                  Due: {format(new Date(selectedTask.dueDate), 'MMM d, yyyy')}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-sm opacity-60 mb-6">
+              This is a task. You can edit or complete it from the Tasks page.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowTaskModal(false)}
+                className="flex-1 px-4 py-2 hover:bg-white/5 rounded-lg transition-all"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setShowTaskModal(false);
+                  router.push('/tasks');
+                }}
+                className="flex-1 px-4 py-2 bg-[#ff6b6b] text-white rounded-lg font-medium hover:bg-[#ff8080] transition-all"
+              >
+                Go to Tasks
               </button>
             </div>
           </div>
