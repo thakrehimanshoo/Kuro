@@ -12,4 +12,4 @@ RUN npm run build
 
 EXPOSE 3000
 
-CMD["node", "./next/standalone/server.js"]
+CMD ["node", ".next/standalone/server.js"]
