@@ -197,4 +197,68 @@ db.version(4).stores({
   }
 });
 
+// Version 5: Create calendar events for tasks with due dates and fix orphaned events
+db.version(5).stores({
+  tasks: '++id, completed, createdAt, priority, dueDate, *tags',
+  sessions: '++id, date, completedAt, type, taskId, abandoned',
+  settings: '++id',
+  notebooks: '++id, name, isDefault, createdAt, updatedAt',
+  notes: '++id, notebookId, title, *tags, isPinned, isFavorite, isArchived, createdAt, updatedAt, deletedAt',
+  tags: '++id, name, usageCount, createdAt',
+  templates: '++id, name, isSystem, createdAt',
+  calendar: '++id, type, linkedId, startDate, endDate, allDay, createdAt, updatedAt',
+}).upgrade(async (tx) => {
+  const now = Date.now();
+
+  // Get all tasks with due dates that are not completed
+  const tasksWithDueDates = await tx.table('tasks').toArray();
+  const existingCalendarEvents = await tx.table('calendar').toArray();
+
+  // Create a map of existing task calendar events by linkedId
+  const taskEventsMap = new Map<number, boolean>();
+  for (const event of existingCalendarEvents) {
+    if (event.type === 'task' && event.linkedId) {
+      taskEventsMap.set(event.linkedId, true);
+    }
+  }
+
+  // Create calendar events for tasks that don't have them
+  for (const task of tasksWithDueDates) {
+    if (task.dueDate && !task.completed && task.id && !taskEventsMap.has(task.id)) {
+      await tx.table('calendar').add({
+        title: `📋 ${task.title}`,
+        startDate: task.dueDate,
+        endDate: task.dueDate,
+        allDay: true,
+        type: 'task',
+        linkedId: task.id,
+        color: '#ff6b6b',
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+  }
+
+  // Remove orphaned task calendar events (events whose linked task no longer exists)
+  const taskIds = new Set(tasksWithDueDates.map(t => t.id));
+  for (const event of existingCalendarEvents) {
+    if (event.type === 'task' && event.linkedId && !taskIds.has(event.linkedId)) {
+      await tx.table('calendar').delete(event.id);
+    }
+  }
+
+  // Remove duplicate task calendar events (keep only one per task)
+  const seenTaskIds = new Set<number>();
+  for (const event of existingCalendarEvents) {
+    if (event.type === 'task' && event.linkedId) {
+      if (seenTaskIds.has(event.linkedId)) {
+        // This is a duplicate, delete it
+        await tx.table('calendar').delete(event.id);
+      } else {
+        seenTaskIds.add(event.linkedId);
+      }
+    }
+  }
+});
+
 export { db };
