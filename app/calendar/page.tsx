@@ -23,6 +23,7 @@ export default function CalendarPage() {
   const [newEventStartTime, setNewEventStartTime] = useState('09:00');
   const [newEventEndTime, setNewEventEndTime] = useState('10:00');
   const [isAllDay, setIsAllDay] = useState(false);
+  const [createAsTask, setCreateAsTask] = useState(false);
 
   // Drag state
   const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
@@ -32,7 +33,6 @@ export default function CalendarPage() {
 
   // Get all calendar events
   const calendarEvents = useLiveQuery(() => db.calendar.toArray());
-  const tasks = useLiveQuery(() => db.tasks.toArray());
 
   // Week view dates - memoized for performance
   const weekDays = useMemo(() => {
@@ -100,28 +100,11 @@ export default function CalendarPage() {
       });
     }
 
-    if (tasks) {
-      tasks.forEach((task) => {
-        if (task.dueDate && !task.completed) {
-          const taskDate = new Date(task.dueDate);
-
-          // Only include tasks that fall within the current view
-          if (taskDate >= rangeStart && taskDate <= rangeEnd) {
-            events.push({
-              title: task.title,
-              start: taskDate,
-              end: taskDate,
-              allDay: true,
-              type: 'task',
-              color: '#ff6b6b',
-            });
-          }
-        }
-      });
-    }
+    // Note: Tasks with due dates are shown via their linked calendar events (type: 'task')
+    // We don't need to read from db.tasks here as calendar events are created when tasks are added
 
     return events;
-  }, [calendarEvents, tasks, currentDate, view]);
+  }, [calendarEvents, currentDate, view]);
 
   const handleCreateEvent = useCallback(() => {
     setSelectedEvent(null);
@@ -130,6 +113,7 @@ export default function CalendarPage() {
     setNewEventStartTime('09:00');
     setNewEventEndTime('10:00');
     setIsAllDay(false);
+    setCreateAsTask(false);
     setShowEventModal(true);
   }, []);
 
@@ -151,7 +135,7 @@ export default function CalendarPage() {
     }
 
     if (selectedEvent?.id) {
-      // Update
+      // Update existing event
       await db.calendar.update(selectedEvent.id, {
         title: newEventTitle,
         startDate,
@@ -159,25 +143,62 @@ export default function CalendarPage() {
         allDay: isAllDay,
         updatedAt: Date.now(),
       });
+
+      // If this is a task event, also update the linked task
+      if (selectedEvent.type === 'task' && selectedEvent.linkedId) {
+        await db.tasks.update(selectedEvent.linkedId, {
+          title: newEventTitle.replace(/^📋\s*/, ''), // Remove emoji prefix if present
+          dueDate: startDate,
+        });
+      }
     } else {
-      // Create
-      await db.calendar.add({
-        title: newEventTitle,
-        startDate,
-        endDate,
-        allDay: isAllDay,
-        type: 'custom',
-        color: '#8ab4f8',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      });
+      // Create new event
+      if (createAsTask && isAllDay) {
+        // Create as a task (which will also create a calendar event)
+        const taskId = await db.tasks.add({
+          title: newEventTitle,
+          completed: false,
+          priority: 'medium',
+          createdAt: Date.now(),
+          dueDate: startDate,
+        });
+
+        await db.calendar.add({
+          title: `📋 ${newEventTitle}`,
+          startDate,
+          endDate,
+          allDay: true,
+          type: 'task',
+          linkedId: taskId as number,
+          color: '#ff6b6b',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+      } else {
+        // Create as regular calendar event
+        await db.calendar.add({
+          title: newEventTitle,
+          startDate,
+          endDate,
+          allDay: isAllDay,
+          type: 'custom',
+          color: '#8ab4f8',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+      }
     }
 
     setShowEventModal(false);
-  }, [newEventTitle, newEventDate, newEventStartTime, newEventEndTime, isAllDay, selectedEvent]);
+    setCreateAsTask(false);
+  }, [newEventTitle, newEventDate, newEventStartTime, newEventEndTime, isAllDay, selectedEvent, createAsTask]);
 
   const handleDeleteEvent = useCallback(async () => {
     if (selectedEvent?.id) {
+      // If this is a task event, also delete the linked task
+      if (selectedEvent.type === 'task' && selectedEvent.linkedId) {
+        await db.tasks.delete(selectedEvent.linkedId);
+      }
       await db.calendar.delete(selectedEvent.id);
       setShowEventModal(false);
       setSelectedEvent(null);
@@ -248,6 +269,7 @@ export default function CalendarPage() {
     setNewEventStartTime(startTime);
     setNewEventEndTime(endTime);
     setIsAllDay(false);
+    setCreateAsTask(false);
     setShowEventModal(true);
   }, []);
 
@@ -259,6 +281,7 @@ export default function CalendarPage() {
     setNewEventStartTime(format(new Date(event.startDate), 'HH:mm'));
     setNewEventEndTime(format(new Date(event.endDate), 'HH:mm'));
     setIsAllDay(event.allDay);
+    setCreateAsTask(false);
     setShowEventModal(true);
   }, []);
 
@@ -423,15 +446,33 @@ export default function CalendarPage() {
                 />
               </div>
 
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="allDay"
-                  checked={isAllDay}
-                  onChange={(e) => setIsAllDay(e.target.checked)}
-                  className="w-4 h-4"
-                />
-                <label htmlFor="allDay" className="text-sm">All day</label>
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="allDay"
+                    checked={isAllDay}
+                    onChange={(e) => {
+                      setIsAllDay(e.target.checked);
+                      if (!e.target.checked) setCreateAsTask(false);
+                    }}
+                    className="w-4 h-4"
+                  />
+                  <label htmlFor="allDay" className="text-sm">All day</label>
+                </div>
+
+                {isAllDay && !selectedEvent && (
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="createAsTask"
+                      checked={createAsTask}
+                      onChange={(e) => setCreateAsTask(e.target.checked)}
+                      className="w-4 h-4 accent-[#ff6b6b]"
+                    />
+                    <label htmlFor="createAsTask" className="text-sm text-[#ff6b6b]">Add to Tasks</label>
+                  </div>
+                )}
               </div>
 
               {!isAllDay && (
@@ -457,12 +498,12 @@ export default function CalendarPage() {
               >
                 Cancel
               </button>
-              {selectedEvent && selectedEvent.type === 'custom' && (
+              {selectedEvent && (selectedEvent.type === 'custom' || selectedEvent.type === 'task') && (
                 <button
                   onClick={handleDeleteEvent}
                   className="px-4 py-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                 >
-                  Delete
+                  Delete{selectedEvent.type === 'task' ? ' Task' : ''}
                 </button>
               )}
               <button
