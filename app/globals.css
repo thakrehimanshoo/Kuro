@@ -312,3 +312,186 @@ input:disabled {
     scrollbar-color: rgba(255, 255, 255, 0.1) rgba(255, 255, 255, 0.02);
   }
 }
+
+/* ===== RESPONSIVE UTILITIES ===== */
+
+/* Touch target minimum size - 44px per Apple HIG */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive text scaling with clamp */
+.text-responsive-xs {
+  font-size: clamp(0.625rem, 1.5vw, 0.75rem);
+}
+
+.text-responsive-sm {
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+}
+
+.text-responsive-base {
+  font-size: clamp(0.875rem, 2.5vw, 1rem);
+}
+
+.text-responsive-lg {
+  font-size: clamp(1rem, 3vw, 1.25rem);
+}
+
+.text-responsive-xl {
+  font-size: clamp(1.25rem, 4vw, 1.5rem);
+}
+
+.text-responsive-2xl {
+  font-size: clamp(1.5rem, 5vw, 2rem);
+}
+
+.text-responsive-3xl {
+  font-size: clamp(1.875rem, 6vw, 3rem);
+}
+
+.text-responsive-4xl {
+  font-size: clamp(2.25rem, 8vw, 3.75rem);
+}
+
+.text-responsive-5xl {
+  font-size: clamp(2.5rem, 10vw, 4.5rem);
+}
+
+/* Container with responsive padding */
+.container-responsive {
+  width: 100%;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-responsive {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-responsive {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Hide scrollbar but allow scroll */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Safe area improvements for iPhone notch and home indicator */
+.pb-safe-nav {
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 1024px) {
+  .pb-safe-nav {
+    padding-bottom: 2rem;
+  }
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Responsive progress ring container */
+.progress-ring-container {
+  width: min(280px, 75vw);
+  height: min(280px, 75vw);
+}
+
+@media (min-width: 375px) {
+  .progress-ring-container {
+    width: min(300px, 80vw);
+    height: min(300px, 80vw);
+  }
+}
+
+@media (min-width: 640px) {
+  .progress-ring-container {
+    width: 320px;
+    height: 320px;
+  }
+}
+
+/* Prevent iOS zoom on input focus - inputs must be 16px+ */
+input, textarea, select {
+  font-size: 16px;
+}
+
+@media (min-width: 1024px) {
+  input, textarea, select {
+    font-size: inherit;
+  }
+}
+
+/* Momentum scrolling for iOS */
+.scroll-momentum {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Prevent pull-to-refresh on iOS PWA */
+body {
+  overscroll-behavior-y: contain;
+}
+
+/* Active state feedback for touch */
+.tap-feedback:active {
+  opacity: 0.7;
+  transform: scale(0.98);
+  transition: all 0.1s ease;
+}
+
+/* Responsive grid helpers */
+.grid-responsive-2 {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .grid-responsive-2 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+.grid-responsive-4 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .grid-responsive-4 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .grid-responsive-4 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-responsive-4 {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+}

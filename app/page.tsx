@@ -204,16 +204,16 @@ export default function TimerPage() {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-black text-white safe-top lg:ml-64">
-      <div className="flex-1 flex flex-col items-center justify-center w-full px-6 lg:px-12 max-w-2xl">
+      <div className="flex-1 flex flex-col items-center justify-center w-full px-4 xs:px-6 lg:px-12 max-w-2xl">
         {/* Pomodoro cycle indicator */}
         {type === 'work' && (
-          <div className="mb-6 flex items-center gap-2">
+          <div className="mb-4 sm:mb-6 flex items-center gap-2 xs:gap-3">
             {[1, 2, 3, 4].map((num) => (
               <div
                 key={num}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                className={`w-2.5 h-2.5 xs:w-3 xs:h-3 rounded-full transition-all duration-300 ${
                   num <= currentPomodoro
-                    ? 'bg-white scale-125'
+                    ? 'bg-white scale-110'
                     : 'bg-white/20'
                 }`}
               />
@@ -222,34 +222,34 @@ export default function TimerPage() {
         )}
 
         {/* Phase and pomodoro number */}
-        <div className="text-center mb-8">
-          <div className="text-sm opacity-40 uppercase tracking-[0.2em] mb-2">
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="text-xs sm:text-sm opacity-40 uppercase tracking-[0.15em] sm:tracking-[0.2em] mb-1.5 sm:mb-2">
             {getPhaseLabel()}
           </div>
           {type === 'work' && (
-            <div className="text-xs opacity-30">
+            <div className="text-[11px] sm:text-xs opacity-30">
               Session {currentPomodoro} of 4
             </div>
           )}
           {/* Time spent on active task */}
           {activeTask && !activeTask.completed && type === 'work' && totalTimeSpent > 0 && (
-            <div className="text-xs opacity-30 mt-2">
+            <div className="text-[11px] sm:text-xs opacity-30 mt-1.5 sm:mt-2">
               Time spent: {Math.floor(totalTimeSpent / 60)}h {Math.round(totalTimeSpent % 60)}m
             </div>
           )}
         </div>
 
         {/* Timer display with progress ring */}
-        <div className="relative mb-10">
-          <div className={status === 'running' ? 'animate-pulse-slow' : ''}>
-            <ProgressRing progress={progress} size={320} strokeWidth={3} />
+        <div className="relative mb-8 sm:mb-10">
+          <div className={`progress-ring-container ${status === 'running' ? 'animate-pulse-slow' : ''}`}>
+            <ProgressRing progress={progress} size="100%" strokeWidth={3} />
           </div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center px-6">
-              <div className="text-7xl font-extralight tracking-tighter mb-3">
+            <div className="text-center px-4">
+              <div className="text-5xl xs:text-6xl sm:text-7xl font-extralight tracking-tighter mb-1.5 sm:mb-3">
                 {formatTime(timeLeft)}
               </div>
-              <div className="text-sm opacity-30 tracking-wide max-w-xs truncate">
+              <div className="text-[11px] sm:text-sm opacity-30 tracking-wide max-w-[180px] xs:max-w-[220px] sm:max-w-xs truncate mx-auto">
                 {getMessage()}
               </div>
             </div>
@@ -257,48 +257,49 @@ export default function TimerPage() {
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-3 xs:gap-4 mb-5 sm:mb-6">
           <button
             onClick={reset}
             disabled={status === 'idle' && timeLeft === totalTime}
-            className="w-14 h-14 rounded-full border border-white/10 flex items-center justify-center transition-all duration-200 active:scale-95 hover:border-white/30 disabled:opacity-20 disabled:hover:border-white/10"
+            className="w-12 h-12 xs:w-14 xs:h-14 rounded-full border border-white/10 flex items-center justify-center transition-all duration-200 active:scale-95 hover:border-white/30 disabled:opacity-20 disabled:hover:border-white/10"
           >
-            <ResetIcon className="w-6 h-6" />
+            <ResetIcon className="w-5 h-5 xs:w-6 xs:h-6" />
           </button>
 
           <button
             onClick={handleStartPause}
-            className="w-24 h-24 rounded-full border-2 border-white flex items-center justify-center transition-all duration-200 active:scale-95 hover:bg-white/5"
+            className="w-20 h-20 xs:w-24 xs:h-24 rounded-full border-2 border-white flex items-center justify-center transition-all duration-200 active:scale-95 hover:bg-white/5"
           >
             {status === 'running' ? (
-              <PauseIcon className="w-10 h-10" />
+              <PauseIcon className="w-8 h-8 xs:w-10 xs:h-10" />
             ) : (
-              <PlayIcon className="w-10 h-10 ml-1" />
+              <PlayIcon className="w-8 h-8 xs:w-10 xs:h-10 ml-1" />
             )}
           </button>
 
           <button
             onClick={skipToNext}
             disabled={status === 'idle' && timeLeft === totalTime}
-            className="w-14 h-14 rounded-full border border-white/10 flex items-center justify-center transition-all duration-200 active:scale-95 hover:border-white/30 disabled:opacity-20 disabled:hover:border-white/10"
+            className="w-12 h-12 xs:w-14 xs:h-14 rounded-full border border-white/10 flex items-center justify-center transition-all duration-200 active:scale-95 hover:border-white/30 disabled:opacity-20 disabled:hover:border-white/10"
             title={getNextPhaseText()}
           >
-            <SkipIcon className="w-6 h-6" />
+            <SkipIcon className="w-5 h-5 xs:w-6 xs:h-6" />
           </button>
         </div>
 
         {/* Secondary controls */}
-        <div className="flex flex-col items-center gap-3 mb-4">
+        <div className="flex flex-col items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
           {/* Complete Session button - shown during work sessions */}
           {type === 'work' && (status === 'running' || status === 'paused') && (
             <button
               onClick={handleCompleteSession}
-              className="px-8 py-3 text-base bg-green-500/20 text-green-400 border-2 border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 transition-all duration-200 rounded-xl flex items-center gap-2 font-medium"
+              className="px-5 xs:px-8 py-2.5 xs:py-3 text-sm xs:text-base bg-green-500/20 text-green-400 border-2 border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 transition-all duration-200 rounded-xl flex items-center gap-2 font-medium min-h-11"
             >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-4 h-4 xs:w-5 xs:h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              Complete Session{activeTask && !activeTask.completed ? ' & Task' : ''}
+              <span className="hidden xs:inline">Complete Session{activeTask && !activeTask.completed ? ' & Task' : ''}</span>
+              <span className="xs:hidden">Complete{activeTask && !activeTask.completed ? ' Task' : ''}</span>
             </button>
           )}
 
@@ -306,16 +307,16 @@ export default function TimerPage() {
             {(status !== 'idle' || timeLeft !== totalTime) && (
               <button
                 onClick={handleAbandon}
-                className="px-4 py-2 text-xs opacity-40 hover:opacity-100 transition-opacity duration-200 border border-white/10 rounded-lg"
+                className="px-4 py-2.5 text-xs opacity-40 hover:opacity-100 transition-opacity duration-200 border border-white/10 rounded-lg min-h-11"
               >
-                Abandon Session
+                Abandon
               </button>
             )}
           </div>
         </div>
 
         {/* Next phase indicator */}
-        <div className="text-xs opacity-20 tracking-wide">
+        <div className="text-[11px] sm:text-xs opacity-20 tracking-wide">
           Next: {getNextPhaseText()}
         </div>
       </div>

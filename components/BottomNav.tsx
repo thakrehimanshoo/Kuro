@@ -19,7 +19,7 @@ export default function BottomNav() {
     <>
       {/* Mobile Bottom Navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-black border-t border-white/10 safe-bottom z-50">
-        <div className="flex justify-around items-center h-16">
+        <div className="flex justify-around items-center h-18 xs:h-16">
           {tabs.map((tab) => {
             const isActive = pathname === tab.path;
             const Icon = tab.icon;
@@ -29,12 +29,12 @@ export default function BottomNav() {
                 key={tab.path}
                 href={tab.path}
                 prefetch={true}
-                className={`flex flex-col items-center justify-center flex-1 h-full transition-opacity duration-150 ${
+                className={`flex flex-col items-center justify-center flex-1 h-full min-w-11 py-2 active:bg-white/5 transition-all duration-150 ${
                   isActive ? 'opacity-100' : 'opacity-40'
                 }`}
               >
-                <Icon className="w-6 h-6 mb-1" />
-                <span className="text-xs">{tab.name}</span>
+                <Icon className="w-5 h-5 xs:w-6 xs:h-6 mb-0.5 xs:mb-1" />
+                <span className="text-[10px] xs:text-xs font-medium">{tab.name}</span>
               </Link>
             );
           })}

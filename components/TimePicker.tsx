@@ -62,7 +62,7 @@ export default function TimePicker({ value, onChange, label }: TimePickerProps) 
         {/* Hours */}
         <div className="flex-1">
           <div className="text-xs opacity-60 mb-2">Hour</div>
-          <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+          <div className="grid grid-cols-3 gap-1.5 max-h-48 overflow-y-auto">
             {hours.map((h) => (
               <button
                 key={h}
@@ -73,10 +73,10 @@ export default function TimePicker({ value, onChange, label }: TimePickerProps) 
                   if (period === 'AM' && h === 12) newHour = 0;
                   setHour(newHour.toString().padStart(2, '0'));
                 }}
-                className={`py-2 rounded-lg text-sm transition-all ${
+                className={`min-h-11 py-2.5 rounded-lg text-sm transition-all active:scale-95 ${
                   displayHour() === h.toString()
                     ? 'bg-[#8ab4f8] text-[#202124] font-medium'
-                    : 'hover:bg-white/10'
+                    : 'hover:bg-white/10 active:bg-white/20'
                 }`}
               >
                 {h}
@@ -88,16 +88,16 @@ export default function TimePicker({ value, onChange, label }: TimePickerProps) 
         {/* Minutes */}
         <div className="flex-1">
           <div className="text-xs opacity-60 mb-2">Minute</div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1.5">
             {minutes.map((m) => (
               <button
                 key={m}
                 type="button"
                 onClick={() => setMinute(m)}
-                className={`py-2 rounded-lg text-sm transition-all ${
+                className={`min-h-11 py-2.5 rounded-lg text-sm transition-all active:scale-95 ${
                   minute === m
                     ? 'bg-[#8ab4f8] text-[#202124] font-medium'
-                    : 'hover:bg-white/10'
+                    : 'hover:bg-white/10 active:bg-white/20'
                 }`}
               >
                 {m}
@@ -109,14 +109,14 @@ export default function TimePicker({ value, onChange, label }: TimePickerProps) 
         {/* AM/PM */}
         <div className="flex-shrink-0">
           <div className="text-xs opacity-60 mb-2">Period</div>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1.5">
             <button
               type="button"
               onClick={() => setPeriod('AM')}
-              className={`px-3 py-2 rounded-lg text-sm transition-all ${
+              className={`px-4 min-h-11 py-2.5 rounded-lg text-sm transition-all active:scale-95 ${
                 period === 'AM'
                   ? 'bg-[#8ab4f8] text-[#202124] font-medium'
-                  : 'hover:bg-white/10'
+                  : 'hover:bg-white/10 active:bg-white/20'
               }`}
             >
               AM
@@ -124,10 +124,10 @@ export default function TimePicker({ value, onChange, label }: TimePickerProps) 
             <button
               type="button"
               onClick={() => setPeriod('PM')}
-              className={`px-3 py-2 rounded-lg text-sm transition-all ${
+              className={`px-4 min-h-11 py-2.5 rounded-lg text-sm transition-all active:scale-95 ${
                 period === 'PM'
                   ? 'bg-[#8ab4f8] text-[#202124] font-medium'
-                  : 'hover:bg-white/10'
+                  : 'hover:bg-white/10 active:bg-white/20'
               }`}
             >
               PM
@@ -139,7 +139,7 @@ export default function TimePicker({ value, onChange, label }: TimePickerProps) 
       <button
         type="button"
         onClick={handleSave}
-        className="w-full py-2 bg-[#8ab4f8] text-[#202124] rounded-lg font-medium hover:bg-[#aecbfa] transition-all"
+        className="w-full min-h-11 py-3 bg-[#8ab4f8] text-[#202124] rounded-lg font-medium hover:bg-[#aecbfa] active:scale-[0.98] transition-all"
       >
         Done
       </button>
@@ -153,7 +153,7 @@ export default function TimePicker({ value, onChange, label }: TimePickerProps) 
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-[#8ab4f8] transition-all flex items-center justify-between"
+        className="w-full px-4 py-3 min-h-11 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-[#8ab4f8] transition-all flex items-center justify-between"
       >
         <span>{displayHour()}:{minute} {period}</span>
         <svg className="w-4 h-4 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -163,8 +163,8 @@ export default function TimePicker({ value, onChange, label }: TimePickerProps) 
 
       {/* Time picker modal - centered on all screen sizes */}
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="bg-[#202124] border border-white/10 rounded-xl p-4 shadow-2xl w-full max-w-[280px]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-3 xs:px-4">
+          <div className="bg-[#202124] border border-white/10 rounded-2xl p-4 xs:p-5 shadow-2xl w-full max-w-[300px] xs:max-w-[320px]">
             {renderPickerContent()}
           </div>
         </div>

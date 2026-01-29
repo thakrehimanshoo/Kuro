@@ -68,135 +68,118 @@ export default function Editor({ content, onChange, placeholder = 'Start writing
     );
   }
 
+  const toolbarBtnClass = (isActive: boolean) =>
+    `min-w-11 min-h-11 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 active:scale-95 flex-shrink-0 ${
+      isActive ? 'bg-white/20' : 'bg-white/5 hover:bg-white/10 active:bg-white/20'
+    }`;
+
   return (
     <div className="editor-wrapper">
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-1 lg:gap-2 p-3 lg:p-4 border-b border-white/10 bg-white/[0.02] sticky top-0 z-10">
-        {/* Text formatting */}
-        <button
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
-            editor.isActive('bold') ? 'bg-white/20' : 'bg-white/5 hover:bg-white/10'
-          }`}
-          title="Bold (⌘B)"
-        >
-          <strong>B</strong>
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
-            editor.isActive('italic') ? 'bg-white/20' : 'bg-white/5 hover:bg-white/10'
-          }`}
-          title="Italic (⌘I)"
-        >
-          <em>I</em>
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-          className={`px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
-            editor.isActive('underline') ? 'bg-white/20' : 'bg-white/5 hover:bg-white/10'
-          }`}
-          title="Underline (⌘U)"
-        >
-          <u>U</u>
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleStrike().run()}
-          className={`px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
-            editor.isActive('strike') ? 'bg-white/20' : 'bg-white/5 hover:bg-white/10'
-          }`}
-          title="Strikethrough"
-        >
-          <s>S</s>
-        </button>
+      {/* Toolbar - scrollable on mobile */}
+      <div className="overflow-x-auto scrollbar-hide border-b border-white/10 bg-white/[0.02] sticky top-0 z-10">
+        <div className="flex items-center gap-1 p-2 xs:p-3 lg:p-4 min-w-max">
+          {/* Text formatting */}
+          <button
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            className={toolbarBtnClass(editor.isActive('bold'))}
+            title="Bold (⌘B)"
+          >
+            <strong>B</strong>
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            className={toolbarBtnClass(editor.isActive('italic'))}
+            title="Italic (⌘I)"
+          >
+            <em>I</em>
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+            className={toolbarBtnClass(editor.isActive('underline'))}
+            title="Underline (⌘U)"
+          >
+            <u>U</u>
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleStrike().run()}
+            className={toolbarBtnClass(editor.isActive('strike'))}
+            title="Strikethrough"
+          >
+            <s>S</s>
+          </button>
 
-        <div className="w-px h-6 bg-white/10 mx-1" />
+          <div className="w-px h-6 bg-white/10 mx-1 flex-shrink-0" />
 
-        {/* Headings */}
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={`px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
-            editor.isActive('heading', { level: 1 }) ? 'bg-white/20' : 'bg-white/5 hover:bg-white/10'
-          }`}
-          title="Heading 1"
-        >
-          H1
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={`px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
-            editor.isActive('heading', { level: 2 }) ? 'bg-white/20' : 'bg-white/5 hover:bg-white/10'
-          }`}
-          title="Heading 2"
-        >
-          H2
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          className={`px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
-            editor.isActive('heading', { level: 3 }) ? 'bg-white/20' : 'bg-white/5 hover:bg-white/10'
-          }`}
-          title="Heading 3"
-        >
-          H3
-        </button>
+          {/* Headings */}
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+            className={toolbarBtnClass(editor.isActive('heading', { level: 1 }))}
+            title="Heading 1"
+          >
+            H1
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+            className={toolbarBtnClass(editor.isActive('heading', { level: 2 }))}
+            title="Heading 2"
+          >
+            H2
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+            className={toolbarBtnClass(editor.isActive('heading', { level: 3 }))}
+            title="Heading 3"
+          >
+            H3
+          </button>
 
-        <div className="w-px h-6 bg-white/10 mx-1" />
+          <div className="w-px h-6 bg-white/10 mx-1 flex-shrink-0" />
 
-        {/* Lists */}
-        <button
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
-            editor.isActive('bulletList') ? 'bg-white/20' : 'bg-white/5 hover:bg-white/10'
-          }`}
-          title="Bullet List"
-        >
-          •
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={`px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
-            editor.isActive('orderedList') ? 'bg-white/20' : 'bg-white/5 hover:bg-white/10'
-          }`}
-          title="Numbered List"
-        >
-          1.
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleTaskList().run()}
-          className={`px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
-            editor.isActive('taskList') ? 'bg-white/20' : 'bg-white/5 hover:bg-white/10'
-          }`}
-          title="Task List"
-        >
-          ☑
-        </button>
+          {/* Lists */}
+          <button
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            className={toolbarBtnClass(editor.isActive('bulletList'))}
+            title="Bullet List"
+          >
+            •
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            className={toolbarBtnClass(editor.isActive('orderedList'))}
+            title="Numbered List"
+          >
+            1.
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleTaskList().run()}
+            className={toolbarBtnClass(editor.isActive('taskList'))}
+            title="Task List"
+          >
+            ☑
+          </button>
 
-        <div className="w-px h-6 bg-white/10 mx-1" />
+          <div className="w-px h-6 bg-white/10 mx-1 flex-shrink-0" />
 
-        {/* Quotes & Code */}
-        <button
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={`px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
-            editor.isActive('blockquote') ? 'bg-white/20' : 'bg-white/5 hover:bg-white/10'
-          }`}
-          title="Quote"
-        >
-          &quot;
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          className={`px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
-            editor.isActive('codeBlock') ? 'bg-white/20' : 'bg-white/5 hover:bg-white/10'
-          }`}
-          title="Code Block"
-        >
-          &lt;/&gt;
-        </button>
+          {/* Quotes & Code */}
+          <button
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            className={toolbarBtnClass(editor.isActive('blockquote'))}
+            title="Quote"
+          >
+            &quot;
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+            className={toolbarBtnClass(editor.isActive('codeBlock'))}
+            title="Code Block"
+          >
+            &lt;/&gt;
+          </button>
+        </div>
       </div>
 
       {/* Editor Content */}
-      <div className="p-6 lg:p-8">
+      <div className="p-4 xs:p-6 lg:p-8">
         <EditorContent editor={editor} />
       </div>
 
