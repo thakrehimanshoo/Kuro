@@ -75,7 +75,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Select date
             e.preventDefault();
             setCurrentMonth(subMonths(currentMonth, 1));
           }}
-          className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-full transition-all text-lg"
+          className="w-11 h-11 flex items-center justify-center hover:bg-white/10 active:bg-white/20 rounded-full transition-all text-xl"
         >
           ‹
         </button>
@@ -88,14 +88,14 @@ export default function DatePicker({ value, onChange, placeholder = 'Select date
             e.preventDefault();
             setCurrentMonth(addMonths(currentMonth, 1));
           }}
-          className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-full transition-all text-lg"
+          className="w-11 h-11 flex items-center justify-center hover:bg-white/10 active:bg-white/20 rounded-full transition-all text-xl"
         >
           ›
         </button>
       </div>
 
       {/* Day labels */}
-      <div className="grid grid-cols-7 gap-1 mb-2">
+      <div className="grid grid-cols-7 gap-0.5 mb-2">
         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
           <div key={i} className="text-center text-xs opacity-50 font-medium py-2">
             {day}
@@ -104,7 +104,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Select date
       </div>
 
       {/* Days grid */}
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-0.5">
         {allDays.map((day, i) => {
           const isSelected = selectedDate && isSameDay(day, selectedDate);
           const isCurrentMonth = isSameMonth(day, currentMonth);
@@ -119,8 +119,8 @@ export default function DatePicker({ value, onChange, placeholder = 'Select date
                 handleDateSelect(day);
               }}
               className={`
-                w-9 h-9 rounded-full flex items-center justify-center text-sm transition-all
-                ${isSelected ? 'bg-[#8ab4f8] text-[#202124] font-medium hover:bg-[#aecbfa]' : 'hover:bg-white/10'}
+                w-10 h-10 xs:w-11 xs:h-11 rounded-full flex items-center justify-center text-sm transition-all active:scale-95
+                ${isSelected ? 'bg-[#8ab4f8] text-[#202124] font-medium hover:bg-[#aecbfa]' : 'hover:bg-white/10 active:bg-white/20'}
                 ${!isCurrentMonth ? 'opacity-40' : ''}
                 ${isTodayDate && !isSelected ? 'border border-white/30' : ''}
               `}
@@ -139,7 +139,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Select date
             e.preventDefault();
             handleDateSelect(new Date());
           }}
-          className="flex-1 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs transition-all"
+          className="flex-1 px-4 py-3 min-h-11 bg-white/5 hover:bg-white/10 active:bg-white/20 rounded-lg text-sm font-medium transition-all"
         >
           Today
         </button>
@@ -150,7 +150,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Select date
             handleClear(e);
             setIsOpen(false);
           }}
-          className="flex-1 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs transition-all"
+          className="flex-1 px-4 py-3 min-h-11 bg-white/5 hover:bg-white/10 active:bg-white/20 rounded-lg text-sm font-medium transition-all"
         >
           Clear
         </button>
@@ -190,8 +190,8 @@ export default function DatePicker({ value, onChange, placeholder = 'Select date
 
       {/* Calendar modal - centered on all screen sizes */}
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="bg-[#202124] border border-white/10 rounded-xl p-4 shadow-2xl w-full max-w-[320px]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-3 xs:px-4">
+          <div className="bg-[#202124] border border-white/10 rounded-2xl p-4 xs:p-5 shadow-2xl w-full max-w-[340px] xs:max-w-[360px]">
             {renderCalendarContent()}
           </div>
         </div>
