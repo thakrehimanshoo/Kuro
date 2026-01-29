@@ -108,15 +108,15 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white lg:ml-64">
+    <div className="flex flex-col h-screen bg-black text-white lg:ml-64 overflow-hidden">
       {/* Header */}
-      <div className="safe-top px-4 xs:px-6 lg:px-12 pt-6 xs:pt-8 lg:pt-12 pb-4 xs:pb-6">
-        <h1 className="text-3xl xs:text-4xl lg:text-5xl font-extralight mb-2 xs:mb-3">Settings</h1>
-        <p className="text-xs xs:text-sm lg:text-base opacity-40">Customize your experience</p>
+      <div className="flex-shrink-0 px-4 sm:px-6 lg:px-12 pt-6 sm:pt-8 lg:pt-12 pb-4 sm:pb-6">
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extralight mb-2 sm:mb-3">Settings</h1>
+        <p className="text-xs sm:text-sm lg:text-base opacity-40">Customize your experience</p>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto pb-24 lg:pb-8 max-w-4xl">
+      {/* Content - scrollable */}
+      <div className="flex-1 overflow-y-auto overscroll-contain pb-24 lg:pb-8 max-w-4xl -webkit-overflow-scrolling-touch">
         {/* Timer durations */}
         <div className="mb-6 xs:mb-8">
           <div className="px-4 xs:px-6 lg:px-12 py-3 xs:py-4">

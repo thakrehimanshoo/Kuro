@@ -12,7 +12,6 @@ html,
 body {
   height: 100%;
   width: 100%;
-  overflow: hidden;
 }
 
 body {
@@ -24,8 +23,6 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   touch-action: manipulation;
-  user-select: none;
-  -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -407,41 +404,27 @@ input:disabled {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
-/* Responsive progress ring container - optimized for small screens */
+/* Responsive progress ring container - iOS style sizing */
 .progress-ring-container {
-  width: min(160px, 48vw);
-  height: min(160px, 48vw);
-}
-
-@media (min-width: 375px) {
-  .progress-ring-container {
-    width: min(180px, 52vw);
-    height: min(180px, 52vw);
-  }
+  width: min(220px, 65vw);
+  height: min(220px, 65vw);
 }
 
 @media (min-width: 414px) {
   .progress-ring-container {
-    width: min(200px, 55vw);
-    height: min(200px, 55vw);
+    width: min(260px, 70vw);
+    height: min(260px, 70vw);
   }
 }
 
 @media (min-width: 640px) {
-  .progress-ring-container {
-    width: 240px;
-    height: 240px;
-  }
-}
-
-@media (min-width: 768px) {
   .progress-ring-container {
     width: 280px;
     height: 280px;
   }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   .progress-ring-container {
     width: 320px;
     height: 320px;
