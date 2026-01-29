@@ -203,15 +203,15 @@ export default function TimerPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-black text-white safe-top lg:ml-64">
-      <div className="flex-1 flex flex-col items-center justify-center w-full px-4 xs:px-6 lg:px-12 max-w-2xl">
+    <div className="flex flex-col items-center justify-between h-screen bg-black text-white safe-top lg:ml-64 overflow-hidden">
+      <div className="flex-1 flex flex-col items-center justify-center w-full px-3 xs:px-4 sm:px-6 lg:px-12 max-w-2xl py-2">
         {/* Pomodoro cycle indicator */}
         {type === 'work' && (
-          <div className="mb-4 sm:mb-6 flex items-center gap-2 xs:gap-3">
+          <div className="mb-2 xs:mb-3 sm:mb-6 flex items-center gap-1.5 xs:gap-2 sm:gap-3">
             {[1, 2, 3, 4].map((num) => (
               <div
                 key={num}
-                className={`w-2.5 h-2.5 xs:w-3 xs:h-3 rounded-full transition-all duration-300 ${
+                className={`w-2 h-2 xs:w-2.5 xs:h-2.5 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${
                   num <= currentPomodoro
                     ? 'bg-white scale-110'
                     : 'bg-white/20'
@@ -222,34 +222,34 @@ export default function TimerPage() {
         )}
 
         {/* Phase and pomodoro number */}
-        <div className="text-center mb-6 sm:mb-8">
-          <div className="text-xs sm:text-sm opacity-40 uppercase tracking-[0.15em] sm:tracking-[0.2em] mb-1.5 sm:mb-2">
+        <div className="text-center mb-3 xs:mb-4 sm:mb-8">
+          <div className="text-[10px] xs:text-xs sm:text-sm opacity-40 uppercase tracking-[0.1em] xs:tracking-[0.15em] sm:tracking-[0.2em] mb-1 xs:mb-1.5 sm:mb-2">
             {getPhaseLabel()}
           </div>
           {type === 'work' && (
-            <div className="text-[11px] sm:text-xs opacity-30">
+            <div className="text-[10px] xs:text-[11px] sm:text-xs opacity-30">
               Session {currentPomodoro} of 4
             </div>
           )}
           {/* Time spent on active task */}
           {activeTask && !activeTask.completed && type === 'work' && totalTimeSpent > 0 && (
-            <div className="text-[11px] sm:text-xs opacity-30 mt-1.5 sm:mt-2">
+            <div className="text-[10px] xs:text-[11px] sm:text-xs opacity-30 mt-1 xs:mt-1.5 sm:mt-2">
               Time spent: {Math.floor(totalTimeSpent / 60)}h {Math.round(totalTimeSpent % 60)}m
             </div>
           )}
         </div>
 
         {/* Timer display with progress ring */}
-        <div className="relative mb-8 sm:mb-10">
+        <div className="relative mb-4 xs:mb-6 sm:mb-10">
           <div className={`progress-ring-container ${status === 'running' ? 'animate-pulse-slow' : ''}`}>
             <ProgressRing progress={progress} size="100%" strokeWidth={3} />
           </div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center px-4">
-              <div className="text-5xl xs:text-6xl sm:text-7xl font-extralight tracking-tighter mb-1.5 sm:mb-3">
+            <div className="text-center px-2 xs:px-4">
+              <div className="text-4xl xs:text-5xl sm:text-7xl font-extralight tracking-tighter mb-0.5 xs:mb-1 sm:mb-3">
                 {formatTime(timeLeft)}
               </div>
-              <div className="text-[11px] sm:text-sm opacity-30 tracking-wide max-w-[180px] xs:max-w-[220px] sm:max-w-xs truncate mx-auto">
+              <div className="text-[9px] xs:text-[11px] sm:text-sm opacity-30 tracking-wide max-w-[140px] xs:max-w-[180px] sm:max-w-xs truncate mx-auto">
                 {getMessage()}
               </div>
             </div>
@@ -257,45 +257,45 @@ export default function TimerPage() {
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-3 xs:gap-4 mb-5 sm:mb-6">
+        <div className="flex items-center gap-2.5 xs:gap-3 sm:gap-4 mb-3 xs:mb-4 sm:mb-6">
           <button
             onClick={reset}
             disabled={status === 'idle' && timeLeft === totalTime}
-            className="w-12 h-12 xs:w-14 xs:h-14 rounded-full border border-white/10 flex items-center justify-center transition-all duration-200 active:scale-95 hover:border-white/30 disabled:opacity-20 disabled:hover:border-white/10"
+            className="w-11 h-11 xs:w-12 xs:h-12 sm:w-14 sm:h-14 rounded-full border border-white/10 flex items-center justify-center transition-all duration-200 active:scale-95 hover:border-white/30 disabled:opacity-20 disabled:hover:border-white/10"
           >
-            <ResetIcon className="w-5 h-5 xs:w-6 xs:h-6" />
+            <ResetIcon className="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6" />
           </button>
 
           <button
             onClick={handleStartPause}
-            className="w-20 h-20 xs:w-24 xs:h-24 rounded-full border-2 border-white flex items-center justify-center transition-all duration-200 active:scale-95 hover:bg-white/5"
+            className="w-16 h-16 xs:w-20 xs:h-20 sm:w-24 sm:h-24 rounded-full border-2 border-white flex items-center justify-center transition-all duration-200 active:scale-95 hover:bg-white/5"
           >
             {status === 'running' ? (
-              <PauseIcon className="w-8 h-8 xs:w-10 xs:h-10" />
+              <PauseIcon className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10" />
             ) : (
-              <PlayIcon className="w-8 h-8 xs:w-10 xs:h-10 ml-1" />
+              <PlayIcon className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 ml-0.5 xs:ml-1" />
             )}
           </button>
 
           <button
             onClick={skipToNext}
             disabled={status === 'idle' && timeLeft === totalTime}
-            className="w-12 h-12 xs:w-14 xs:h-14 rounded-full border border-white/10 flex items-center justify-center transition-all duration-200 active:scale-95 hover:border-white/30 disabled:opacity-20 disabled:hover:border-white/10"
+            className="w-11 h-11 xs:w-12 xs:h-12 sm:w-14 sm:h-14 rounded-full border border-white/10 flex items-center justify-center transition-all duration-200 active:scale-95 hover:border-white/30 disabled:opacity-20 disabled:hover:border-white/10"
             title={getNextPhaseText()}
           >
-            <SkipIcon className="w-5 h-5 xs:w-6 xs:h-6" />
+            <SkipIcon className="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 
         {/* Secondary controls */}
-        <div className="flex flex-col items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
+        <div className="flex flex-col items-center gap-2 xs:gap-2.5 sm:gap-3 mb-2 xs:mb-3 sm:mb-4">
           {/* Complete Session button - shown during work sessions */}
           {type === 'work' && (status === 'running' || status === 'paused') && (
             <button
               onClick={handleCompleteSession}
-              className="px-5 xs:px-8 py-2.5 xs:py-3 text-sm xs:text-base bg-green-500/20 text-green-400 border-2 border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 transition-all duration-200 rounded-xl flex items-center gap-2 font-medium min-h-11"
+              className="px-4 xs:px-5 sm:px-8 py-2 xs:py-2.5 sm:py-3 text-xs xs:text-sm sm:text-base bg-green-500/20 text-green-400 border-2 border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 transition-all duration-200 rounded-xl flex items-center gap-1.5 xs:gap-2 font-medium min-h-10 xs:min-h-11"
             >
-              <svg className="w-4 h-4 xs:w-5 xs:h-5" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
               <span className="hidden xs:inline">Complete Session{activeTask && !activeTask.completed ? ' & Task' : ''}</span>
@@ -307,7 +307,7 @@ export default function TimerPage() {
             {(status !== 'idle' || timeLeft !== totalTime) && (
               <button
                 onClick={handleAbandon}
-                className="px-4 py-2.5 text-xs opacity-40 hover:opacity-100 transition-opacity duration-200 border border-white/10 rounded-lg min-h-11"
+                className="px-3 xs:px-4 py-2 xs:py-2.5 text-[10px] xs:text-xs opacity-40 hover:opacity-100 transition-opacity duration-200 border border-white/10 rounded-lg min-h-10 xs:min-h-11"
               >
                 Abandon
               </button>
@@ -316,7 +316,7 @@ export default function TimerPage() {
         </div>
 
         {/* Next phase indicator */}
-        <div className="text-[11px] sm:text-xs opacity-20 tracking-wide">
+        <div className="text-[10px] xs:text-[11px] sm:text-xs opacity-20 tracking-wide">
           Next: {getNextPhaseText()}
         </div>
       </div>

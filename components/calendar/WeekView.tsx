@@ -52,18 +52,18 @@ export default function WeekView({
     <div className="flex flex-col h-full">
       {/* Header row with day names */}
       <div className="flex border-b border-white/10 flex-shrink-0">
-        <div className="w-14 lg:w-16 flex-shrink-0 border-r border-white/10" />
+        <div className="w-10 xs:w-12 sm:w-14 lg:w-16 flex-shrink-0 border-r border-white/10" />
         {weekDays.map(day => {
           const isTodayDate = isToday(day);
           return (
             <div
               key={`header-${day.toString()}`}
-              className={`flex-1 min-w-[90px] lg:min-w-0 flex flex-col items-center justify-center py-2 border-r border-white/10 ${
+              className={`flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 xs:py-2 border-r border-white/10 ${
                 isTodayDate ? 'bg-[#8ab4f8]/10' : ''
               }`}
             >
-              <div className="text-[10px] lg:text-xs opacity-60">{format(day, 'EEE')}</div>
-              <div className={`w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-full text-sm lg:text-base ${
+              <div className="text-[8px] xs:text-[9px] sm:text-[10px] lg:text-xs opacity-60">{format(day, 'EEE').charAt(0)}<span className="hidden xs:inline">{format(day, 'EEE').slice(1)}</span></div>
+              <div className={`w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-full text-xs xs:text-sm lg:text-base ${
                 isTodayDate ? 'bg-[#8ab4f8] text-[#202124] font-medium' : ''
               }`}>
                 {format(day, 'd')}
@@ -75,9 +75,9 @@ export default function WeekView({
 
       {/* All-day events row */}
       {allDayHeight > 0 && (
-        <div className="flex border-b border-white/10 flex-shrink-0" style={{ minHeight: `${allDayHeight}px` }}>
-          <div className="w-14 lg:w-16 flex-shrink-0 border-r border-white/10 flex items-start justify-end pr-1 pt-1">
-            <span className="text-[9px] lg:text-[10px] opacity-40">all-day</span>
+        <div className="flex border-b border-white/10 flex-shrink-0" style={{ minHeight: `${Math.min(allDayHeight, 80)}px` }}>
+          <div className="w-10 xs:w-12 sm:w-14 lg:w-16 flex-shrink-0 border-r border-white/10 flex items-start justify-end pr-0.5 xs:pr-1 pt-0.5 xs:pt-1">
+            <span className="text-[7px] xs:text-[8px] sm:text-[9px] lg:text-[10px] opacity-40">all-day</span>
           </div>
           {weekDays.map(day => {
             const allDayEvents = getEventsForDay(day).filter(e => e.allDay);
@@ -86,14 +86,14 @@ export default function WeekView({
             return (
               <div
                 key={`allday-${day.toString()}`}
-                className={`flex-1 min-w-[90px] lg:min-w-0 border-r border-white/10 p-1 space-y-1 overflow-hidden ${
+                className={`flex-1 min-w-0 border-r border-white/10 p-0.5 xs:p-1 space-y-0.5 xs:space-y-1 overflow-hidden ${
                   isTodayDate ? 'bg-[#8ab4f8]/5' : ''
                 }`}
               >
-                {allDayEvents.map((event, i) => (
+                {allDayEvents.slice(0, 3).map((event, i) => (
                   <div
                     key={i}
-                    className="px-1.5 py-0.5 rounded text-[10px] lg:text-xs truncate cursor-pointer hover:opacity-80 transition-opacity"
+                    className="px-0.5 xs:px-1 sm:px-1.5 py-0.5 rounded text-[7px] xs:text-[8px] sm:text-[10px] lg:text-xs truncate cursor-pointer hover:opacity-80 transition-opacity"
                     style={{ backgroundColor: event.color + '40', color: event.color }}
                     onClick={() => {
                       if (event.type === 'task' && event.id && onTaskClick) {
@@ -101,9 +101,13 @@ export default function WeekView({
                       }
                     }}
                   >
-                    {event.title}
+                    <span className="hidden xs:inline">{event.title}</span>
+                    <span className="xs:hidden">{event.title.slice(0, 6)}{event.title.length > 6 ? '..' : ''}</span>
                   </div>
                 ))}
+                {allDayEvents.length > 3 && (
+                  <div className="text-[7px] xs:text-[8px] opacity-50 px-0.5">+{allDayEvents.length - 3}</div>
+                )}
               </div>
             );
           })}
@@ -111,12 +115,12 @@ export default function WeekView({
       )}
 
       {/* Scrollable time grid */}
-      <div className="flex-1 overflow-y-auto overflow-x-auto">
-        <div className="flex min-w-full lg:min-w-[640px]">
+      <div className="flex-1 overflow-y-auto">
+        <div className="flex min-w-full">
           {/* Time column */}
-          <div className="w-14 lg:w-16 flex-shrink-0 border-r border-white/10">
+          <div className="w-10 xs:w-12 sm:w-14 lg:w-16 flex-shrink-0 border-r border-white/10">
             {HOURS.map(hour => (
-              <div key={hour} className="h-16 text-[10px] lg:text-xs opacity-40 pr-1 lg:pr-2 text-right pt-1">
+              <div key={hour} className="h-12 xs:h-14 sm:h-16 text-[8px] xs:text-[9px] sm:text-[10px] lg:text-xs opacity-40 pr-0.5 xs:pr-1 lg:pr-2 text-right pt-0.5 xs:pt-1">
                 {hour === 0 ? '12a' : hour < 12 ? `${hour}a` : hour === 12 ? '12p' : `${hour - 12}p`}
               </div>
             ))}
@@ -128,7 +132,7 @@ export default function WeekView({
             const isTodayDate = isToday(day);
 
             return (
-              <div key={day.toString()} className="flex-1 border-r border-white/10 min-w-[90px] lg:min-w-0">
+              <div key={day.toString()} className="flex-1 border-r border-white/10 min-w-0">
 
                 {/* Time slots */}
                 <div
@@ -140,7 +144,7 @@ export default function WeekView({
                   {HOURS.map(hour => (
                     <div
                       key={hour}
-                      className="h-16 border-b border-white/5 hover:bg-white/[0.02] cursor-pointer"
+                      className="h-12 xs:h-14 sm:h-16 border-b border-white/5 hover:bg-white/[0.02] cursor-pointer"
                       onClick={() => {
                         if (!isDragging) {
                           onCreateEvent(
@@ -159,13 +163,18 @@ export default function WeekView({
                     const timedEvents = dayEvents.filter(e => !e.allDay);
                     const positionedEvents = calculateEventLayout(timedEvents);
 
+                    // Use CSS variable-like approach for responsive heights
+                    // Base: 48px (h-12), xs: 56px (h-14), sm+: 64px (h-16)
+                    const hourHeight = typeof window !== 'undefined' && window.innerWidth < 375 ? 48 :
+                                       typeof window !== 'undefined' && window.innerWidth < 640 ? 56 : 64;
+
                     return positionedEvents.map((event, i) => {
 
                       const startHour = event.start.getHours();
                       const startMinute = event.start.getMinutes();
                       const duration = (event.end.getTime() - event.start.getTime()) / (1000 * 60);
-                      const top = startHour * 64 + (startMinute / 60) * 64;
-                      const height = (duration / 60) * 64;
+                      const top = startHour * hourHeight + (startMinute / 60) * hourHeight;
+                      const height = (duration / 60) * hourHeight;
 
                       const fullEvent = event.id ? calendarEvents?.find(e => e.id === event.id) : null;
                       const isDraggable = fullEvent && event.type === 'custom';
@@ -182,7 +191,7 @@ export default function WeekView({
                           style={{
                             backgroundColor: event.color + '80',
                             top: `${top}px`,
-                            height: `${Math.max(height, 32)}px`,
+                            height: `${Math.max(height, 24)}px`,
                             left: positionStyle.left,
                             width: positionStyle.width,
                           }}
@@ -214,10 +223,10 @@ export default function WeekView({
                             </div>
                           )}
 
-                          <div className="px-1 lg:px-2 py-0.5 lg:py-1 overflow-hidden">
-                            <div className="font-medium truncate text-[10px] lg:text-xs">{event.title}</div>
-                            {height >= 40 && (
-                              <div className="text-[9px] lg:text-xs opacity-80 truncate">
+                          <div className="px-0.5 xs:px-1 lg:px-2 py-0.5 lg:py-1 overflow-hidden">
+                            <div className="font-medium truncate text-[7px] xs:text-[8px] sm:text-[10px] lg:text-xs">{event.title}</div>
+                            {height >= 32 && (
+                              <div className="text-[6px] xs:text-[7px] sm:text-[9px] lg:text-xs opacity-80 truncate hidden xs:block">
                                 {format(event.start, 'h:mm a')}
                               </div>
                             )}

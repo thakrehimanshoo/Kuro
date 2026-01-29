@@ -407,20 +407,34 @@ input:disabled {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
-/* Responsive progress ring container */
+/* Responsive progress ring container - optimized for small screens */
 .progress-ring-container {
-  width: min(280px, 75vw);
-  height: min(280px, 75vw);
+  width: min(200px, 55vw);
+  height: min(200px, 55vw);
 }
 
 @media (min-width: 375px) {
   .progress-ring-container {
-    width: min(300px, 80vw);
-    height: min(300px, 80vw);
+    width: min(220px, 60vw);
+    height: min(220px, 60vw);
+  }
+}
+
+@media (min-width: 414px) {
+  .progress-ring-container {
+    width: min(260px, 65vw);
+    height: min(260px, 65vw);
   }
 }
 
 @media (min-width: 640px) {
+  .progress-ring-container {
+    width: 280px;
+    height: 280px;
+  }
+}
+
+@media (min-width: 768px) {
   .progress-ring-container {
     width: 320px;
     height: 320px;
