@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay, startOfMonth, endOfMonth, addMonths, subMonths, addDays, subDays } from 'date-fns';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useRouter } from 'next/navigation';
@@ -11,6 +11,7 @@ import TimePicker from '@/components/TimePicker';
 import DayView from '@/components/calendar/DayView';
 import WeekView from '@/components/calendar/WeekView';
 import MonthView from '@/components/calendar/MonthView';
+import MobileAgendaView from '@/components/calendar/MobileAgendaView';
 import { CalendarPageSkeleton } from '@/components/Skeleton';
 
 type ViewType = 'day' | 'week' | 'month';
@@ -20,6 +21,15 @@ export default function CalendarPage() {
   const [view, setView] = useState<ViewType>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showEventModal, setShowEventModal] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile screen
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [newEventTitle, setNewEventTitle] = useState('');
   const [newEventDate, setNewEventDate] = useState('');
@@ -315,8 +325,8 @@ export default function CalendarPage() {
 
   return (
     <div className="flex flex-col h-screen bg-[#1a1a1a] text-white lg:ml-64">
-      {/* Header */}
-      <div className="border-b border-white/10">
+      {/* Header - hidden on mobile where MobileAgendaView has its own */}
+      <div className={`border-b border-white/10 ${isMobile ? 'hidden' : ''}`}>
         {/* Top row - Mobile optimized */}
         <div className="flex items-center justify-between px-4 lg:px-8 py-3 lg:py-4">
           <div className="flex items-center gap-2 lg:gap-4">
@@ -403,7 +413,15 @@ export default function CalendarPage() {
 
       {/* Calendar View */}
       <div className="flex-1 overflow-hidden">
-        {view === 'day' ? (
+        {isMobile ? (
+          <MobileAgendaView
+            currentDate={currentDate}
+            onDateChange={setCurrentDate}
+            onCreateEvent={handleCreateEvent}
+            onTaskClick={handleTaskClick}
+            getEventsForDay={getEventsForDay}
+          />
+        ) : view === 'day' ? (
           <DayView
             currentDate={currentDate}
             events={visibleEvents}
