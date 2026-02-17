@@ -108,22 +108,22 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white lg:ml-64">
+    <div className="flex flex-col h-screen bg-black text-white lg:ml-64 xl:ml-72">
       {/* Header */}
-      <div className="safe-top px-4 xs:px-6 lg:px-12 pt-6 xs:pt-8 lg:pt-12 pb-4 xs:pb-6">
+      <div className="safe-top px-4 xs:px-6 md:px-8 lg:px-12 pt-6 xs:pt-8 lg:pt-12 pb-4 xs:pb-6">
         <h1 className="text-3xl xs:text-4xl lg:text-5xl font-extralight mb-2 xs:mb-3">Settings</h1>
         <p className="text-xs xs:text-sm lg:text-base opacity-40">Customize your experience</p>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto pb-24 lg:pb-8 max-w-4xl">
+      <div className="flex-1 overflow-y-auto pb-20 xs:pb-24 lg:pb-8 max-w-4xl">
         {/* Timer durations */}
         <div className="mb-6 xs:mb-8">
-          <div className="px-4 xs:px-6 lg:px-12 py-3 xs:py-4">
+          <div className="px-4 xs:px-6 md:px-8 lg:px-12 py-3 xs:py-4">
             <h2 className="text-[11px] xs:text-xs lg:text-sm opacity-40 uppercase tracking-wider">Timer Durations</h2>
           </div>
 
-          <div className="px-4 xs:px-6 lg:px-12 space-y-4 xs:space-y-6">
+          <div className="px-4 xs:px-6 md:px-8 lg:px-12 space-y-4 xs:space-y-6">
             <div className="flex items-center justify-between py-2">
               <span className="text-sm xs:text-base">Focus Session</span>
               <div className="flex items-center gap-2 xs:gap-4">
@@ -200,11 +200,11 @@ export default function SettingsPage() {
 
         {/* Auto-start */}
         <div className="mb-6 xs:mb-8 border-t border-white/10">
-          <div className="px-4 xs:px-6 lg:px-12 py-3 xs:py-4 mt-4 xs:mt-6">
+          <div className="px-4 xs:px-6 md:px-8 lg:px-12 py-3 xs:py-4 mt-4 xs:mt-6">
             <h2 className="text-[11px] xs:text-xs opacity-40 uppercase tracking-wider">Auto-start</h2>
           </div>
 
-          <div className="px-4 xs:px-6 lg:px-12 space-y-2 xs:space-y-4">
+          <div className="px-4 xs:px-6 md:px-8 lg:px-12 space-y-2 xs:space-y-4">
             <button
               onClick={handleAutoBreaksToggle}
               className="w-full flex items-center justify-between min-h-11 py-2.5 xs:py-3 active:opacity-60 transition-opacity duration-200"
@@ -231,11 +231,11 @@ export default function SettingsPage() {
 
         {/* Sound */}
         <div className="mb-6 xs:mb-8 border-t border-white/10">
-          <div className="px-4 xs:px-6 lg:px-12 py-3 xs:py-4 mt-4 xs:mt-6">
+          <div className="px-4 xs:px-6 md:px-8 lg:px-12 py-3 xs:py-4 mt-4 xs:mt-6">
             <h2 className="text-[11px] xs:text-xs opacity-40 uppercase tracking-wider">Audio</h2>
           </div>
 
-          <div className="px-4 xs:px-6">
+          <div className="px-4 xs:px-6 md:px-8 lg:px-12">
             <button
               onClick={handleSoundToggle}
               className="w-full flex items-center justify-between min-h-11 py-2.5 xs:py-3 active:opacity-60 transition-opacity duration-200"
@@ -251,11 +251,11 @@ export default function SettingsPage() {
 
         {/* Account */}
         <div className="mb-6 xs:mb-8 border-t border-white/10">
-          <div className="px-4 xs:px-6 lg:px-12 py-3 xs:py-4 mt-4 xs:mt-6">
+          <div className="px-4 xs:px-6 md:px-8 lg:px-12 py-3 xs:py-4 mt-4 xs:mt-6">
             <h2 className="text-[11px] xs:text-xs opacity-40 uppercase tracking-wider">Account</h2>
           </div>
 
-          <div className="px-4 xs:px-6 lg:px-12 space-y-3 xs:space-y-4">
+          <div className="px-4 xs:px-6 md:px-8 lg:px-12 space-y-3 xs:space-y-4">
             {user ? (
               <>
                 <div className="bg-white/5 border border-white/10 rounded-xl xs:rounded-2xl p-3 xs:p-4">
@@ -287,7 +287,7 @@ export default function SettingsPage() {
         </div>
 
         {/* About */}
-        <div className="px-4 xs:px-6 lg:px-12 py-8 xs:py-12 border-t border-white/10 mt-6 xs:mt-8">
+        <div className="px-4 xs:px-6 md:px-8 lg:px-12 py-8 xs:py-12 border-t border-white/10 mt-6 xs:mt-8">
           <div className="text-center">
             <div className="text-4xl xs:text-5xl font-extralight mb-2 xs:mb-3">Kuro</div>
             <div className="text-xs xs:text-sm opacity-40 mb-1">Version 1.0.0</div>

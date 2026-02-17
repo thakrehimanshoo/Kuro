@@ -269,15 +269,15 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white lg:ml-64">
+    <div className="flex flex-col h-screen bg-black text-white lg:ml-64 xl:ml-72">
       {/* Header */}
-      <div className="safe-top px-6 lg:px-12 pt-8 lg:pt-12 pb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h1 className="text-4xl lg:text-5xl font-extralight">Tasks</h1>
+      <div className="safe-top px-4 xs:px-6 md:px-8 lg:px-12 pt-6 xs:pt-8 lg:pt-12 pb-4 xs:pb-6">
+        <div className="flex items-center justify-between mb-2 xs:mb-3">
+          <h1 className="text-3xl xs:text-4xl lg:text-5xl font-extralight">Tasks</h1>
           <div className="flex gap-2">
             <button
               onClick={() => setViewType('list')}
-              className={`px-3 py-1.5 rounded-lg text-xs transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm transition-all ${
                 viewType === 'list' ? 'bg-white text-black' : 'bg-white/5 opacity-60'
               }`}
             >
@@ -285,7 +285,7 @@ export default function TasksPage() {
             </button>
             <button
               onClick={() => setViewType('kanban')}
-              className={`px-3 py-1.5 rounded-lg text-xs transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm transition-all ${
                 viewType === 'kanban' ? 'bg-white text-black' : 'bg-white/5 opacity-60'
               }`}
             >
@@ -293,17 +293,17 @@ export default function TasksPage() {
             </button>
           </div>
         </div>
-        <div className="flex items-center gap-4 text-sm lg:text-base flex-wrap">
+        <div className="flex items-center gap-3 xs:gap-4 text-xs xs:text-sm lg:text-base flex-wrap">
           <span className="opacity-60">
             {taskCounts.today} today
           </span>
-          <span className="opacity-20">•</span>
+          <span className="opacity-20">{'\u2022'}</span>
           <span className="opacity-60">
             {taskCounts.upcoming} upcoming
           </span>
           {taskCounts.overdue > 0 && (
             <>
-              <span className="opacity-20">•</span>
+              <span className="opacity-20">{'\u2022'}</span>
               <span className="text-red-400">
                 {taskCounts.overdue} overdue
               </span>
@@ -313,7 +313,7 @@ export default function TasksPage() {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-2 border-b border-white/10 px-6 lg:px-12 overflow-x-auto">
+      <div className="flex gap-1 xs:gap-2 border-b border-white/10 px-4 xs:px-6 md:px-8 lg:px-12 overflow-x-auto scrollbar-hide">
         {[
           { key: 'all', label: 'All', count: allTasks?.filter(t => !t.completed).length || 0 },
           { key: 'today', label: 'Today', count: taskCounts.today },
@@ -324,7 +324,7 @@ export default function TasksPage() {
           <button
             key={key}
             onClick={() => setFilter(key as FilterType)}
-            className={`px-4 py-4 text-sm lg:text-base transition-all duration-150 relative whitespace-nowrap ${
+            className={`px-3 xs:px-4 py-3 xs:py-4 text-xs xs:text-sm lg:text-base transition-all duration-150 relative whitespace-nowrap ${
               filter === key ? 'opacity-100' : 'opacity-40'
             }`}
           >
@@ -341,7 +341,7 @@ export default function TasksPage() {
         {viewType === 'list' ? (
           // List View
           tasks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full px-6 lg:px-12">
+            <div className="flex flex-col items-center justify-center h-full px-4 xs:px-6 md:px-8 lg:px-12">
               <div className="w-16 h-16 rounded-full border-2 border-white/10 flex items-center justify-center mb-4">
                 <CheckIcon className="w-8 h-8 opacity-20" />
               </div>
@@ -350,7 +350,7 @@ export default function TasksPage() {
               </p>
             </div>
           ) : (
-            <div className="px-6 lg:px-12 py-2 max-w-6xl">
+            <div className="px-4 xs:px-6 md:px-8 lg:px-12 py-2 max-w-6xl">
               {tasks.map((task, index) => {
                 const dateLabel = getDateLabel(task.dueDate);
 
@@ -409,8 +409,8 @@ export default function TasksPage() {
                       </div>
                     </div>
 
-                    {/* Action buttons */}
-                    <div className="flex-shrink-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    {/* Action buttons - visible on mobile, hover on desktop */}
+                    <div className="flex-shrink-0 flex items-center gap-1 sm:gap-2 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
                       <button
                         onClick={() => handleEditTask(task)}
                         className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-lg transition-all duration-200 active:scale-90"
@@ -447,7 +447,7 @@ export default function TasksPage() {
           )
         ) : (
           // Board View - Horizontal Rows
-          <div className="px-3 lg:px-12 py-4 lg:py-6 space-y-4 lg:space-y-6 overflow-y-auto">
+          <div className="px-3 xs:px-4 md:px-8 lg:px-12 py-3 xs:py-4 lg:py-6 space-y-3 xs:space-y-4 lg:space-y-6 overflow-y-auto">
             {[
               { key: 'high', label: 'High Priority', tasks: kanbanColumns.high, color: 'border-red-500/30', bgColor: 'bg-red-500/5' },
               { key: 'medium', label: 'Medium Priority', tasks: kanbanColumns.medium, color: 'border-yellow-500/30', bgColor: 'bg-yellow-500/5' },
@@ -518,14 +518,14 @@ export default function TasksPage() {
       </div>
 
       {/* Add/Edit task form */}
-      <div className="fixed bottom-16 lg:bottom-0 left-0 right-0 lg:left-64 bg-black border-t border-white/10 safe-bottom">
+      <div className="fixed bottom-14 xs:bottom-16 lg:bottom-0 left-0 right-0 lg:left-64 xl:left-72 bg-black/95 backdrop-blur-md border-t border-white/10 safe-bottom z-40">
         {/* Priority and date selectors */}
-        <div className="px-6 lg:px-12 pt-4 pb-2">
-          <div className="flex gap-2 mb-3 max-w-6xl">
-            <div className="flex gap-2 flex-1">
+        <div className="px-3 xs:px-4 md:px-8 lg:px-12 pt-3 xs:pt-4 pb-1 xs:pb-2">
+          <div className="flex gap-2 mb-2 xs:mb-3 max-w-6xl">
+            <div className="flex gap-1.5 xs:gap-2 flex-1">
               <button
                 onClick={() => setSelectedPriority('low')}
-                className={`flex-1 px-3 py-2 rounded-lg border transition-all duration-200 text-xs ${
+                className={`flex-1 px-2 xs:px-3 py-1.5 xs:py-2 rounded-lg border transition-all duration-200 text-[11px] xs:text-xs ${
                   selectedPriority === 'low'
                     ? 'border-green-500 bg-green-500/20 text-green-400'
                     : 'border-white/10 opacity-40'
@@ -535,7 +535,7 @@ export default function TasksPage() {
               </button>
               <button
                 onClick={() => setSelectedPriority('medium')}
-                className={`flex-1 px-3 py-2 rounded-lg border transition-all duration-200 text-xs ${
+                className={`flex-1 px-2 xs:px-3 py-1.5 xs:py-2 rounded-lg border transition-all duration-200 text-[11px] xs:text-xs ${
                   selectedPriority === 'medium'
                     ? 'border-yellow-500 bg-yellow-500/20 text-yellow-400'
                     : 'border-white/10 opacity-40'
@@ -545,7 +545,7 @@ export default function TasksPage() {
               </button>
               <button
                 onClick={() => setSelectedPriority('high')}
-                className={`flex-1 px-3 py-2 rounded-lg border transition-all duration-200 text-xs ${
+                className={`flex-1 px-2 xs:px-3 py-1.5 xs:py-2 rounded-lg border transition-all duration-200 text-[11px] xs:text-xs ${
                   selectedPriority === 'high'
                     ? 'border-red-500 bg-red-500/20 text-red-400'
                     : 'border-white/10 opacity-40'
@@ -558,35 +558,35 @@ export default function TasksPage() {
               value={dueDate}
               onChange={setDueDate}
               placeholder="Due date"
-              className="w-32"
+              className="w-28 xs:w-32"
             />
           </div>
         </div>
 
-        <div className="px-6 lg:px-12 pb-4">
-          <form onSubmit={handleAddTask} className="flex flex-col gap-3 max-w-6xl">
+        <div className="px-3 xs:px-4 md:px-8 lg:px-12 pb-3 xs:pb-4">
+          <form onSubmit={handleAddTask} className="flex flex-col gap-2 xs:gap-3 max-w-6xl">
             <input
               type="text"
               value={taskTags}
               onChange={(e) => setTaskTags(e.target.value)}
               placeholder="Tags (comma separated)"
-              className="bg-white/5 border border-white/10 rounded-xl px-5 py-2 text-white placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/[0.07] transition-all duration-150 text-sm"
+              className="bg-white/5 border border-white/10 rounded-lg xs:rounded-xl px-3 xs:px-5 py-1.5 xs:py-2 text-white placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/[0.07] transition-all duration-150 text-xs xs:text-sm"
             />
-            <div className="flex gap-3">
+            <div className="flex gap-2 xs:gap-3">
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Add a new task..."
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/[0.07] transition-all duration-150 text-base"
+                className="flex-1 bg-white/5 border border-white/10 rounded-lg xs:rounded-xl px-3 xs:px-5 py-3 xs:py-4 text-white placeholder-white/30 focus:outline-none focus:border-white/30 focus:bg-white/[0.07] transition-all duration-150 text-sm xs:text-base"
                 autoComplete="off"
               />
               <button
                 type="submit"
                 disabled={!inputValue.trim()}
-                className="w-14 h-14 rounded-xl bg-white text-black flex items-center justify-center disabled:opacity-10 disabled:bg-white/5 disabled:text-white transition-all duration-150 active:scale-95 hover:scale-105 disabled:hover:scale-100 disabled:active:scale-100"
+                className="w-12 h-12 xs:w-14 xs:h-14 rounded-lg xs:rounded-xl bg-white text-black flex items-center justify-center disabled:opacity-10 disabled:bg-white/5 disabled:text-white transition-all duration-150 active:scale-95 hover:scale-105 disabled:hover:scale-100 disabled:active:scale-100 flex-shrink-0"
               >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 xs:w-6 xs:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
               </button>
@@ -597,7 +597,7 @@ export default function TasksPage() {
 
       {/* Edit Task Modal */}
       {showTaskModal && editingTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4 lg:px-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4 md:px-6">
           <div className="bg-black border border-white/20 rounded-2xl p-4 lg:p-8 w-full max-w-md">
             <h2 className="text-2xl font-extralight mb-6">Edit Task</h2>
 
@@ -699,7 +699,7 @@ export default function TasksPage() {
 
       {/* Switch Task Confirmation Modal */}
       {showSwitchTaskModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4 lg:px-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4 md:px-6">
           <div className="bg-black border border-white/20 rounded-2xl p-4 lg:p-8 w-full max-w-md">
             <div className="text-center mb-6">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center">
