@@ -215,12 +215,12 @@ export default function NotesPage() {
   };
 
   return (
-    <div className="flex h-screen bg-black text-white lg:ml-64">
+    <div className="flex h-screen bg-black text-white lg:ml-64 xl:ml-72">
       {/* Sidebar - Notebooks & Tags */}
       <div
         className={`${
           showSidebar ? 'fixed inset-0 z-50' : 'hidden'
-        } lg:relative lg:flex flex-col w-full lg:w-64 bg-black lg:bg-white/[0.02] border-r border-white/10`}
+        } lg:relative lg:flex flex-col w-full lg:w-64 xl:w-72 bg-black lg:bg-white/[0.02] border-r border-white/10 flex-shrink-0`}
       >
         {/* Mobile close button */}
         <button
@@ -315,7 +315,7 @@ export default function NotesPage() {
       <div
         className={`${
           showNotesList ? 'flex' : 'hidden lg:flex'
-        } flex-col w-full lg:w-80 bg-white/[0.02] border-r border-white/10`}
+        } flex-col w-full lg:w-72 xl:w-80 bg-white/[0.02] border-r border-white/10 flex-shrink-0`}
       >
         <div className="p-4 border-b border-white/10">
           <div className="flex items-center gap-2 mb-3">
@@ -341,7 +341,7 @@ export default function NotesPage() {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto pb-16 lg:pb-0">
           {filteredNotes.length === 0 ? (
             <div className="p-8 text-center">
               <p className="text-sm opacity-40">No notes yet</p>
@@ -394,23 +394,23 @@ export default function NotesPage() {
       </div>
 
       {/* Editor */}
-      <div className={`${showNotesList ? 'hidden lg:flex' : 'flex'} flex-1 flex-col`}>
+      <div className={`${showNotesList ? 'hidden lg:flex' : 'flex'} flex-1 flex-col min-w-0`}>
         {selectedNoteId ? (
           <>
-            <div className="p-6 lg:p-8 border-b border-white/10">
-              <div className="flex items-center gap-3">
+            <div className="p-4 xs:p-6 lg:p-8 border-b border-white/10">
+              <div className="flex items-center gap-2 xs:gap-3">
                 <button
                   onClick={() => setShowNotesList(true)}
-                  className="lg:hidden w-10 h-10 flex items-center justify-center rounded-lg bg-white/5"
+                  className="lg:hidden w-10 h-10 flex items-center justify-center rounded-lg bg-white/5 flex-shrink-0"
                 >
-                  ←
+                  {'\u2190'}
                 </button>
                 <input
                   type="text"
                   value={noteTitle}
                   onChange={(e) => setNoteTitle(e.target.value)}
                   placeholder="Untitled"
-                  className="flex-1 text-3xl lg:text-4xl font-extralight bg-transparent outline-none"
+                  className="flex-1 text-2xl xs:text-3xl lg:text-4xl font-extralight bg-transparent outline-none min-w-0"
                 />
                 {isSaving && (
                   <span className="text-xs opacity-40 whitespace-nowrap">Saving...</span>
@@ -432,7 +432,7 @@ export default function NotesPage() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto pb-16 lg:pb-0">
               <div className="max-w-4xl mx-auto">
                 <Editor content={noteContent} onChange={setNoteContent} />
               </div>

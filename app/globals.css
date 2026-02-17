@@ -29,7 +29,7 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Desktop/Web responsive override */
+/* Tablet and above - allow text selection */
 @media (min-width: 768px) {
   body {
     user-select: text;
@@ -86,7 +86,7 @@ select,
   }
 }
 
-/* Hide scrollbar but keep functionality */
+/* Hide scrollbar but keep functionality on mobile */
 ::-webkit-scrollbar {
   display: none;
 }
@@ -262,23 +262,47 @@ input:disabled {
 
 /* ===== RESPONSIVE WEB DESIGN ===== */
 
-/* Desktop and above - Full redesign for laptop/desktop */
-@media (min-width: 1024px) {
-  /* Allow scrolling on desktop */
+/* Tablet - enable scrolling and show thin scrollbars */
+@media (min-width: 768px) {
   html,
   body {
     overflow: auto;
   }
 
   body {
-    user-select: text;
-    -webkit-user-select: text;
     display: block;
     min-height: 100vh;
     height: auto;
   }
 
-  /* Main container - full width */
+  ::-webkit-scrollbar {
+    display: block;
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  * {
+    -ms-overflow-style: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+  }
+}
+
+/* Desktop and above - Full redesign for laptop/desktop */
+@media (min-width: 1024px) {
+  /* Main container - full width with sidebar */
   #__next {
     width: 100%;
     max-width: none;
@@ -287,9 +311,8 @@ input:disabled {
     display: flex;
   }
 
-  /* Better scrollbars on desktop */
+  /* Wider scrollbars on desktop */
   ::-webkit-scrollbar {
-    display: block;
     width: 10px;
   }
 
@@ -307,8 +330,6 @@ input:disabled {
   }
 
   * {
-    -ms-overflow-style: auto;
-    scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.1) rgba(255, 255, 255, 0.02);
   }
 }
@@ -375,10 +396,24 @@ input:disabled {
   }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   .container-responsive {
     padding-left: 2rem;
     padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-responsive {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container-responsive {
+    padding-left: 4rem;
+    padding-right: 4rem;
   }
 }
 
@@ -394,7 +429,13 @@ input:disabled {
 
 /* Safe area improvements for iPhone notch and home indicator */
 .pb-safe-nav {
-  padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 375px) {
+  .pb-safe-nav {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 @media (min-width: 1024px) {
@@ -407,7 +448,7 @@ input:disabled {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
-/* Responsive progress ring container - optimized for small screens */
+/* Responsive progress ring container - optimized across all screen sizes */
 .progress-ring-container {
   width: min(160px, 48vw);
   height: min(160px, 48vw);
@@ -448,12 +489,19 @@ input:disabled {
   }
 }
 
+@media (min-width: 1280px) {
+  .progress-ring-container {
+    width: 360px;
+    height: 360px;
+  }
+}
+
 /* Prevent iOS zoom on input focus - inputs must be 16px+ */
 input, textarea, select {
   font-size: 16px;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   input, textarea, select {
     font-size: inherit;
   }
@@ -491,6 +539,26 @@ body {
   }
 }
 
+.grid-responsive-3 {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .grid-responsive-3 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-responsive-3 {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+}
+
 .grid-responsive-4 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -514,5 +582,24 @@ body {
   .grid-responsive-4 {
     grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
+  }
+}
+
+/* ===== RESPONSIVE CONTENT MAX-WIDTH ===== */
+/* Constrain content width on very wide screens for readability */
+.content-constrained {
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (min-width: 1280px) {
+  .content-constrained {
+    max-width: 1200px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .content-constrained {
+    max-width: 1400px;
   }
 }

@@ -117,7 +117,7 @@ export default function MobileAgendaView({
       </div>
 
       {/* Events list - scrollable only if needed */}
-      <div className="flex-1 overflow-y-auto px-3 pb-2 min-h-0">
+      <div className="flex-1 overflow-y-auto px-3 pb-20 min-h-0">
         {todayEvents.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center opacity-40">
             <div className="text-2xl mb-2">📅</div>

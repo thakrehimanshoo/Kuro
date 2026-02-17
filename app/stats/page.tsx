@@ -185,15 +185,15 @@ export default function StatsPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white lg:ml-64">
+    <div className="flex flex-col h-screen bg-black text-white lg:ml-64 xl:ml-72">
       {/* Header */}
-      <div className="safe-top px-4 xs:px-6 lg:px-12 pt-6 xs:pt-8 lg:pt-12 pb-4 xs:pb-6">
+      <div className="safe-top px-4 xs:px-6 md:px-8 lg:px-12 pt-6 xs:pt-8 lg:pt-12 pb-4 xs:pb-6">
         <h1 className="text-3xl xs:text-4xl lg:text-5xl font-extralight mb-2 xs:mb-3">Stats</h1>
         <p className="text-xs xs:text-sm lg:text-base opacity-40">Your productivity insights</p>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto pb-24 lg:pb-8 px-4 xs:px-6 lg:px-12">
+      <div className="flex-1 overflow-y-auto pb-20 xs:pb-24 lg:pb-8 px-4 xs:px-6 md:px-8 lg:px-12">
         {!hasData ? (
           <div className="flex flex-col items-center justify-center h-full">
             <div className="w-16 h-16 xs:w-20 xs:h-20 rounded-full border-2 border-white/10 flex items-center justify-center mb-4 xs:mb-6">
@@ -207,11 +207,11 @@ export default function StatsPage() {
             </p>
           </div>
         ) : (
-          <div className="max-w-7xl space-y-8 xs:space-y-10 lg:space-y-12">
+          <div className="max-w-6xl space-y-8 xs:space-y-10 lg:space-y-12">
             {/* Today's Overview */}
             <div>
               <h2 className="text-[11px] xs:text-xs lg:text-sm opacity-40 uppercase tracking-wider mb-4 xs:mb-6">Today&apos;s Progress</h2>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 xs:gap-4 lg:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 xs:gap-4 lg:gap-6">
                 <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20 rounded-xl xs:rounded-2xl p-4 xs:p-6">
                   <div className="text-3xl xs:text-4xl lg:text-5xl font-extralight mb-1.5 xs:mb-3">{todayMetrics.completed}</div>
                   <div className="text-xs xs:text-sm opacity-60">Sessions</div>
@@ -232,7 +232,7 @@ export default function StatsPage() {
             </div>
 
             {/* Week Chart and Task Stats */}
-            <div className="lg:grid lg:grid-cols-2 lg:gap-6 space-y-8 xs:space-y-10 lg:space-y-0">
+            <div className="md:grid md:grid-cols-2 md:gap-5 lg:gap-6 space-y-8 xs:space-y-10 md:space-y-0">
               {/* Week Chart */}
               <div>
                 <h2 className="text-[11px] xs:text-xs lg:text-sm opacity-40 uppercase tracking-wider mb-4 xs:mb-6">Last 7 Days</h2>
@@ -306,7 +306,7 @@ export default function StatsPage() {
               {/* Task Stats */}
               <div>
                 <h2 className="text-[11px] xs:text-xs lg:text-sm opacity-40 uppercase tracking-wider mb-4 xs:mb-6">Task Overview</h2>
-                <div className="bg-white/[0.02] border border-white/10 rounded-xl xs:rounded-2xl p-4 xs:p-6 min-h-[240px] xs:h-[280px] flex flex-col justify-center">
+                <div className="bg-white/[0.02] border border-white/10 rounded-xl xs:rounded-2xl p-4 xs:p-6 min-h-[200px] xs:min-h-[240px] md:min-h-0 md:h-full flex flex-col justify-center">
                   <div className="space-y-3 xs:space-y-4">
                     <div>
                       <div className="flex items-center justify-between mb-1.5 xs:mb-2">
@@ -445,7 +445,7 @@ export default function StatsPage() {
             {/* All-time stats */}
             <div>
               <h2 className="text-[11px] xs:text-xs lg:text-sm opacity-40 uppercase tracking-wider mb-4 xs:mb-6">All Time</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 xs:gap-4 lg:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 xs:gap-4 lg:gap-6">
                 <div className="bg-white/[0.02] border border-white/10 rounded-xl xs:rounded-2xl p-4 xs:p-6 flex items-center justify-between">
                   <div>
                     <div className="text-xs xs:text-sm opacity-40 mb-1.5 xs:mb-2">Total Sessions</div>
@@ -460,7 +460,7 @@ export default function StatsPage() {
                   </div>
                   <div className="text-3xl xs:text-4xl opacity-10">📈</div>
                 </div>
-                <div className="bg-white/[0.02] border border-white/10 rounded-xl xs:rounded-2xl p-4 xs:p-6 flex items-center justify-between sm:col-span-2 lg:col-span-1">
+                <div className="bg-white/[0.02] border border-white/10 rounded-xl xs:rounded-2xl p-4 xs:p-6 flex items-center justify-between sm:col-span-2 md:col-span-1">
                   <div>
                     <div className="text-xs xs:text-sm opacity-40 mb-1.5 xs:mb-2">Total Focus Time</div>
                     <div className="text-2xl xs:text-3xl font-extralight">

@@ -324,11 +324,11 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#1a1a1a] text-white lg:ml-64">
+    <div className="flex flex-col h-screen bg-[#1a1a1a] text-white lg:ml-64 xl:ml-72">
       {/* Header - hidden on mobile where MobileAgendaView has its own */}
       <div className={`border-b border-white/10 ${isMobile ? 'hidden' : ''}`}>
-        {/* Top row - Mobile optimized */}
-        <div className="flex items-center justify-between px-4 lg:px-8 py-3 lg:py-4">
+        {/* Top row */}
+        <div className="flex items-center justify-between px-4 md:px-6 lg:px-8 py-3 lg:py-4">
           <div className="flex items-center gap-2 lg:gap-4">
             <button
               onClick={() => setCurrentDate(new Date())}
@@ -371,7 +371,7 @@ export default function CalendarPage() {
         </div>
 
         {/* Second row - Title and view switcher */}
-        <div className="flex items-center justify-between px-4 lg:px-8 pb-3 lg:pb-4">
+        <div className="flex items-center justify-between px-4 md:px-6 lg:px-8 pb-3 lg:pb-4">
           <h1 className="text-base lg:text-xl font-normal truncate">
             {view === 'day'
               ? format(currentDate, 'EEEE, MMM d, yyyy')
@@ -461,7 +461,7 @@ export default function CalendarPage() {
 
       {/* Event Modal */}
       {showEventModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 lg:px-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 md:px-6">
           <div className="bg-[#202124] border border-white/20 rounded-xl p-4 lg:p-6 w-full max-w-md">
             <h2 className="text-lg lg:text-xl font-normal mb-4 lg:mb-6">
               {selectedEvent ? 'Edit Event' : 'Add Event'}
@@ -564,7 +564,7 @@ export default function CalendarPage() {
 
       {/* Task Modal - when clicking on a task in calendar */}
       {showTaskModal && selectedTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 lg:px-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 md:px-6">
           <div className="bg-[#202124] border border-white/20 rounded-xl p-4 lg:p-6 w-full max-w-md">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-[#ff6b6b]/20 flex items-center justify-center">
